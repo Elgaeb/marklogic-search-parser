@@ -1,0 +1,40 @@
+# Ignore hidden files by default
+.*
+
+# Ignore backup files by default
+*~
+
+# Include specific hidden files
+!.*ignore
+!.*rc
+!.*rc.json
+!.editorconfig
+!.env
+!.gitattributes
+!.gitmodules
+
+# Build directories for various tools
+build/
+dist/
+dist-libs/
+target/
+coverage/
+out/
+test-output/
+bin/
+testConfig/
+node_modules/
+
+# IDE artifacts
+*.iml
+*.ipr
+
+# Miscellaneous files
+**.lock
+**.log*
+*.class
+*.prefs
+
+# Local files
+*-local*.*
+*-local*
