@@ -34,6 +34,7 @@ const lexer = moo.compile({
         "kw_from": "FROM",
         "kw_to": "TO",
         "kw_eq": "EQ",
+        "kw_is": "IS",
         "kw_lt": "LT",
         "kw_le": "LE",
         "kw_gt": "GT",
@@ -41,6 +42,7 @@ const lexer = moo.compile({
         "kw_ne": "NE",
         "kw_near": "NEAR",
         "kw_boost": "BOOST",
+        "kw_contains": "CONTAINS",
     })}
   });
 
@@ -124,16 +126,21 @@ joiner ->
       %kw_and expression
     | %kw_or expression
 
+equality_operator ->
+    %colon
+    | %kw_eq
+    | %kw_is
+
 range_operator ->
-      %kw_eq
-    | %kw_lt
+    %kw_lt
     | %kw_le
     | %kw_gt
     | %kw_ge
 
 constraint ->
-      %word %colon literal {% ([constraint, _c, value]) => _constraint(constraint.value, "EQ", value.value) %}
+      %word equality_operator literal {% ([constraint, _c, value]) => _constraint(constraint.value, "EQ", value.value) %}
     | %word range_operator literal {% ([constraint, op, value]) => _constraint(constraint.value, head(op).value, value.value) %}
+    | %word %kw_contains literal {% ([constraint, op, value]) => _constraint(constraint.value, op.value, value.value) %}
     | %word %kw_from literal %kw_to literal {% ([constraint, _b, l1, _a, l2]) => 
         _and([
         _constraint(constraint.value, "GE", l1.value),
