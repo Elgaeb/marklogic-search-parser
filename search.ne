@@ -53,16 +53,23 @@ lexer.next = (next => () => {
 })(lexer.next);
 
 
-function word([token]) {
-  return {
-    word: token.value
-  };
-}
-
 function head(arr) {
   return arr[0];
 }
 
+function _word([token]) {
+  return {
+    type: 'WORD',
+    word: token.value
+  };
+}
+
+function _phrase([token]) {
+  return {
+    type: 'PHRASE',
+    phrase: token.value
+  };
+}
 
 function _constraint(name, operator, value) {
   return {
@@ -73,20 +80,58 @@ function _constraint(name, operator, value) {
   };
 }
 
+/*
 function _and(expressions) {
   return {
     type: "AND",
     expressions
   };
 }
+*/
 
+function _and(expressions) {
+  return {
+    type: 'AND',
+    expressions: [].concat(...[expressions[0], expressions[1].map(v => v[1][0])])
+  }
+}
+
+/*
 function _or(expressions) {
   return {
     type: "OR",
     expressions
   };
 }
+*/
 
+function _or(expressions) {
+  return {
+    type: 'OR',
+    expressions: [].concat(...[expressions[0], expressions[1].map(v => v[1][0])])
+  }
+}
+
+function __or(ox, ax) {
+  return {
+    type: 'OR',
+    children: [].concat(...[ox, ax])
+  };
+}
+
+function __and(ax, wx) {
+  return {
+    type: 'AND',
+    children: [].concat(...[ax, wx])
+  };
+}
+
+function __word(wx) {
+  return {
+    type: 'WORD',
+    word: wx.value
+  }
+}
 
 %}
 
@@ -94,55 +139,15 @@ function _or(expressions) {
 
 # Use %token to match any token of that type instead of "token":
 
-expression -> 
-      solo_expression {% head %}
-    | or_expression {% head %}
-    | and_expression {% head %}
+expression -> or_expression {% head %}
 
-group_expression ->
-    %lparen expression %rparen {% ([_l, ex1, _r]) => _and([ex1]) %}
+or_expression -> or_expression %kw_or and_expression {% ([ox, op, ax]) => __or(ox, ax) %}
+or_expression -> and_expression
 
-literal ->
-    %word {% head %}
-    | %number {% head %}
-    | %date {% head %}
-    | %wildcarded_word {% head %}
-    | %single_quoted_string {% head %}
-    | %double_quoted_string {% head %}
+and_expression -> and_expression %kw_and group_expression {% ([ax, op, wx]) => __and(ax, wx) %}
+and_expression -> group_expression {% head %}
 
-solo_expression ->
-    literal {% word %}
-    | group_expression {% head %}
-    | constraint {% head %}
+group_expression -> %lparen expression %rparen {% ([lp, ex, rp]) => ex %}
+group_expression -> word_terminal {% head %}
 
-or_expression ->
-    solo_expression %kw_or expression {% ([ex1, _j, ex2]) => _or([ex1, ex2]) %}
-
-and_expression ->
-      solo_expression %kw_and expression {% ([ex1, _j, ex2]) => _and([ex1, ex2]) %}
-    | solo_expression expression {% ([ex1, ex2]) => _and([ex1, ex2]) %}
-
-joiner ->
-      %kw_and expression
-    | %kw_or expression
-
-equality_operator ->
-    %colon
-    | %kw_eq
-    | %kw_is
-
-range_operator ->
-    %kw_lt
-    | %kw_le
-    | %kw_gt
-    | %kw_ge
-
-constraint ->
-      %word equality_operator literal {% ([constraint, _c, value]) => _constraint(constraint.value, "EQ", value.value) %}
-    | %word range_operator literal {% ([constraint, op, value]) => _constraint(constraint.value, head(op).value, value.value) %}
-    | %word %kw_contains literal {% ([constraint, op, value]) => _constraint(constraint.value, op.value, value.value) %}
-    | %word %kw_from literal %kw_to literal {% ([constraint, _b, l1, _a, l2]) => 
-        _and([
-        _constraint(constraint.value, "GE", l1.value),
-        _constraint(constraint.value, "LE", l2.value),
-      ]) %}
+word_terminal -> %word {% ([wx]) => __word(wx) %}
