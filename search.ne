@@ -57,61 +57,6 @@ function head(arr) {
   return arr[0];
 }
 
-function _word([token]) {
-  return {
-    type: 'WORD',
-    word: token.value
-  };
-}
-
-function _phrase([token]) {
-  return {
-    type: 'PHRASE',
-    phrase: token.value
-  };
-}
-
-function _constraint(name, operator, value) {
-  return {
-    type: "CONSTRAINT",
-    name,
-    operator,
-    value
-  };
-}
-
-/*
-function _and(expressions) {
-  return {
-    type: "AND",
-    expressions
-  };
-}
-*/
-
-function _and(expressions) {
-  return {
-    type: 'AND',
-    expressions: [].concat(...[expressions[0], expressions[1].map(v => v[1][0])])
-  }
-}
-
-/*
-function _or(expressions) {
-  return {
-    type: "OR",
-    expressions
-  };
-}
-*/
-
-function _or(expressions) {
-  return {
-    type: 'OR',
-    expressions: [].concat(...[expressions[0], expressions[1].map(v => v[1][0])])
-  }
-}
-
 function __or(ox, ax) {
   return {
     type: 'OR',
@@ -160,7 +105,7 @@ expression -> or_expression {% head %}
 or_expression -> or_expression %kw_or and_expression {% ([ox, op, ax]) => __or(ox, ax) %}
 or_expression -> and_expression
 
-and_expression -> and_expression %kw_and group_expression {% ([ax, op, wx]) => __and(ax, wx) %}
+and_expression -> and_expression %kw_and:? group_expression {% ([ax, op, wx]) => __and(ax, wx) %}
 and_expression -> group_expression {% head %}
 
 group_expression -> %lparen expression %rparen {% ([lp, ex, rp]) => ex %}
