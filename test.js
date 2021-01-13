@@ -71,7 +71,7 @@ function writeResults(writeStream, results) {
 
 // const searchString = "JANE AND LONG AND DOE AND III";
 // const searchString = "JANE AND LONG OR DOE AND III";
-const searchString = "(JANE OR JOHN) AND DOE OR III";
+const searchString = "(JANE OR JOHN) AND DOE OR \"JOHN JANE DOE\"";
 
 const grammar = compileGrammar({
     grammar: fs.readFileSync('./search.ne', 'utf8'),

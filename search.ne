@@ -133,6 +133,13 @@ function __word(wx) {
   }
 }
 
+function __phrase(wx) {
+  return {
+    type: 'PHRASE',
+    word: wx.value
+  }
+}
+
 %}
 
 @lexer lexer
@@ -148,6 +155,15 @@ and_expression -> and_expression %kw_and group_expression {% ([ax, op, wx]) => _
 and_expression -> group_expression {% head %}
 
 group_expression -> %lparen expression %rparen {% ([lp, ex, rp]) => ex %}
-group_expression -> word_terminal {% head %}
+group_expression -> terminal_expression {% head %}
+
+terminal_expression -> word_terminal {% head %}
+terminal_expression -> phrase_terminal {% head %}
 
 word_terminal -> %word {% ([wx]) => __word(wx) %}
+word_terminal -> %number {% ([wx]) => __word(wx) %}
+word_terminal -> %date {% ([wx]) => __word(wx) %}
+word_terminal -> %wildcarded_word {% ([wx]) => __word(wx) %}
+
+phrase_terminal -> %single_quoted_string {% ([wx]) => __phrase(wx) %}
+phrase_terminal -> %double_quoted_string {% ([wx]) => __phrase(wx) %}
