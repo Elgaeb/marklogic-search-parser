@@ -129,14 +129,23 @@ function __and(ax, wx) {
 function __word(wx) {
   return {
     type: 'WORD',
-    word: wx.value
+    value: wx.value
   }
 }
 
 function __phrase(wx) {
   return {
     type: 'PHRASE',
-    word: wx.value
+    value: wx.value
+  }
+}
+
+function __constraint(name, operator, value) {
+  return {
+    type: 'CONSTRAINT',
+    name,
+    operator,
+    value
   }
 }
 
@@ -159,6 +168,7 @@ group_expression -> terminal_expression {% head %}
 
 terminal_expression -> word_terminal {% head %}
 terminal_expression -> phrase_terminal {% head %}
+terminal_expression -> constraint_terminal {% head %}
 
 word_terminal -> %word {% ([wx]) => __word(wx) %}
 word_terminal -> %number {% ([wx]) => __word(wx) %}
@@ -167,3 +177,13 @@ word_terminal -> %wildcarded_word {% ([wx]) => __word(wx) %}
 
 phrase_terminal -> %single_quoted_string {% ([wx]) => __phrase(wx) %}
 phrase_terminal -> %double_quoted_string {% ([wx]) => __phrase(wx) %}
+
+constraint_terminal -> %word equality_terminal literal_terminal {% ([wx, cx, tx]) => __constraint(wx.value, 'EQ', tx[0].value) %}
+constraint_terminal -> %word range_terminal literal_terminal {% ([wx, cx, tx]) => __constraint(wx.value, cx[0].value, tx[0].value) %}
+
+range_terminal -> %kw_lt
+range_terminal -> %kw_le
+range_terminal -> %kw_gt
+range_terminal -> %kw_ge
+equality_terminal -> (%kw_eq | %kw_is | %colon)
+literal_terminal -> (word_terminal | phrase_terminal) {% head %}
