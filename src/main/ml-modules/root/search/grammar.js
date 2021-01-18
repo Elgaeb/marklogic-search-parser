@@ -15,8 +15,6 @@ const lexer = moo.compile({
     slash: '/',
     dash: '-',
     number: /(?:\d+(?:[.]\d+)?|(?:[.]\d+))(?=[ \t\n\r)])/,
-    dot: '.',
-    times: '*',
     wildcarded_word: /[0-9\w?*]*[?*][\w?*]*/,
     date: [
         { match: /\d{4,4}[-/.]\d{1,2}[-/.]\d{1,2}(?=[ \t\n\r)])/, value: s => {
@@ -103,13 +101,13 @@ var grammar = {
     ParserRules: [
     {"name": "expression", "symbols": ["or_expression"], "postprocess": head},
     {"name": "or_expression", "symbols": ["or_expression", (lexer.has("kw_or") ? {type: "kw_or"} : kw_or), "and_expression"], "postprocess": ([ox, op, ax]) => __or(ox, ax)},
-    {"name": "or_expression", "symbols": ["and_expression"]},
+    {"name": "or_expression", "symbols": ["and_expression"], "postprocess": head},
     {"name": "and_expression$ebnf$1", "symbols": [(lexer.has("kw_and") ? {type: "kw_and"} : kw_and)], "postprocess": id},
     {"name": "and_expression$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "and_expression", "symbols": ["and_expression", "and_expression$ebnf$1", "group_expression"], "postprocess": ([ax, op, wx]) => __and(ax, wx)},
     {"name": "and_expression", "symbols": ["group_expression"], "postprocess": head},
     {"name": "group_expression", "symbols": [(lexer.has("lparen") ? {type: "lparen"} : lparen), "expression", (lexer.has("rparen") ? {type: "rparen"} : rparen)], "postprocess": ([lp, ex, rp]) => ex},
-    {"name": "group_expression", "symbols": ["terminal_expression"]},
+    {"name": "group_expression", "symbols": ["terminal_expression"], "postprocess": head},
     {"name": "terminal_expression", "symbols": ["word_terminal"], "postprocess": head},
     {"name": "terminal_expression", "symbols": ["phrase_terminal"], "postprocess": head},
     {"name": "terminal_expression", "symbols": ["constraint_terminal"], "postprocess": head},

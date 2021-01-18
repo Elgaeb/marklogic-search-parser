@@ -1,11 +1,45 @@
 {
-  "database-name" : "%%DATABASE%%",
-  "range-element-index" : [ {
-    "scalar-type" : "string",
-    "namespace-uri" : "CHANGEME",
-    "localname" : "CHANGEME",
-    "collation" : "http://marklogic.com/collation/",
-    "range-value-positions" : false,
-    "invalid-values" : "reject"
-  } ]
+  "database-name": "%%DATABASE%%",
+  "range-element-index": [
+    {
+      "scalar-type": "string",
+      "namespace-uri": null,
+      "localname": "genderCode",
+      "collation": "http://marklogic.com/collation/",
+      "range-value-positions": false,
+      "invalid-values": "ignore"
+    },
+    {
+      "scalar-type": "string",
+      "namespace-uri": null,
+      "localname": "gender",
+      "collation": "http://marklogic.com/collation/",
+      "range-value-positions": false,
+      "invalid-values": "ignore"
+    },
+    {
+      "scalar-type": "string",
+      "namespace-uri": null,
+      "localname": "race",
+      "collation": "http://marklogic.com/collation/",
+      "range-value-positions": false,
+      "invalid-values": "ignore"
+    }
+  ],
+  "range-path-index": [
+    {
+      "scalar-type": "string",
+      "path-expression": "//Name/firstName",
+      "collation": "http://marklogic.com/collation/",
+      "range-value-positions": false,
+      "invalid-values": "ignore"
+    },
+    {
+      "scalar-type": "string",
+      "path-expression": "//Name/lastName",
+      "collation": "http://marklogic.com/collation/",
+      "range-value-positions": false,
+      "invalid-values": "ignore"
+    }
+  ]
 }

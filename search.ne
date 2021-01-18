@@ -11,8 +11,6 @@ const lexer = moo.compile({
     slash: '/',
     dash: '-',
     number: /(?:\d+(?:[.]\d+)?|(?:[.]\d+))(?=[ \t\n\r)])/,
-    dot: '.',
-    times: '*',
     wildcarded_word: /[0-9\w?*]*[?*][\w?*]*/,
     date: [
         { match: /\d{4,4}[-/.]\d{1,2}[-/.]\d{1,2}(?=[ \t\n\r)])/, value: s => {
@@ -103,7 +101,7 @@ function __constraint(name, operator, value) {
 expression -> or_expression {% head %}
 
 or_expression -> or_expression %kw_or and_expression {% ([ox, op, ax]) => __or(ox, ax) %}
-or_expression -> and_expression
+or_expression -> and_expression {% head %}
 
 and_expression -> and_expression %kw_and:? group_expression {% ([ax, op, wx]) => __and(ax, wx) %}
 and_expression -> group_expression {% head %}
