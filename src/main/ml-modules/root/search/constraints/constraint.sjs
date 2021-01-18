@@ -29,14 +29,18 @@ function finishFacet({ startValue, constraintConfig, query }) {
 
 function doFacet({ options, query }) {
     const startValues = options.constraints.map(constraintConfig => {
-        return {
-            constraintConfig,
-            startValue: startFacet({
+        if(!!constraintConfig.faceted) {
+            return {
                 constraintConfig,
-                query
-            })
-        };
-    });
+                startValue: startFacet({
+                    constraintConfig,
+                    query
+                })
+            };
+        } else {
+            return null;
+        }
+    }).filter(v => v != null);
     
     return startValues.map(sv => {
         return finishFacet({

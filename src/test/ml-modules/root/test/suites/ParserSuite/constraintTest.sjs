@@ -22,7 +22,7 @@ const options = {
         {
             name: "FirstName",
             type: "value",
-            faceted: false,
+            // faceted: false,
             wildcarded: true,
             includeMissingValues: false,
             options: [ "item-order", "ascending", "fragment-frequency", "limit=3" ],
