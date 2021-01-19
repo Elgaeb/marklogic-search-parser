@@ -2,29 +2,29 @@
 const moo = require("moo");
 
 const lexer = moo.compile({
-    double_quoted_string: {match: /"(?:\\["\\]|[^\n"\\])*"/, value: s => s.slice(1, -1).replace(/\\"/g, '"') },
-    single_quoted_string: {match: /'(?:\\['\\]|[^\n'\\])*'/, value: s => s.slice(1, -1).replace(/\\'/g, "'") },
-    whitespace: {match: /[ \t\n\r]+/, lineBreaks: true},
-    lparen: '(',
-    rparen: ')',
-    colon: ':',
-    slash: '/',
-    dash: '-',
-    number: /(?:\d+(?:[.]\d+)?|(?:[.]\d+))(?=[ \t\n\r)])/,
-    wildcarded_word: /[0-9\w?*]*[?*][\w?*]*/,
+    double_quoted_string: {match: /"(?:\\["\\]|[^\n"\\])*"/u, value: s => s.slice(1, -1).replace(/\\"/g, '"') },
+    single_quoted_string: {match: /'(?:\\['\\]|[^\n'\\])*'/u, value: s => s.slice(1, -1).replace(/\\'/g, "'") },
+    whitespace: {match: /[ \t\n\r]+/u, lineBreaks: true},
+    lparen: /[(]/u,
+    rparen: /[)]/u,
+    colon: /:/u,
+    slash: /[/]/u,
+    dash: /-/u,
+    number: /(?:\d+(?:[.]\d+)?|(?:[.]\d+))(?=[ \t\n\r)])/u,
+    wildcarded_word: /[0-9\w?*]*[?*][\w?*]*/u,
     date: [
-        { match: /\d{4,4}[-/.]\d{1,2}[-/.]\d{1,2}(?=[ \t\n\r)])/, value: s => {
+        { match: /\d{4,4}[-/.]\d{1,2}[-/.]\d{1,2}(?=[ \t\n\r)])/u, value: s => {
             const parts = s.split(/[-./]/);
             return `${parts[0]}-${parts[1].padStart(2, "0")}-${parts[2].padStart(2, "0")}`;
         }},
-        { match: /\d{1,2}[-/.]\d{1,2}[-/.](?:\d{2,2}|\d{4,4})(?=[ \t\n\r)])/, value: s => {
+        { match: /\d{1,2}[-/.]\d{1,2}[-/.](?:\d{2,2}|\d{4,4})(?=[ \t\n\r)])/u, value: s => {
             const parts = s.split(/[-./]/);
             let partialYear = parseInt(parts[2]);
             let year = partialYear >= 1000 ? partialYear : partialYear >= 70 ? 1900 + partialYear : 2000 + partialYear;
             return `${year}-${parts[0].padStart(2, "0")}-${parts[1].padStart(2, "0")}`;
         }},
     ],
-    word: {match: /[0-9A-Za-z]+[\w\-_]*/, type: moo.keywords({
+    word: {match: /[0-9A-Za-z]+[\w\-_]*/u, type: moo.keywords({
         "kw_and": "AND",
         "kw_or": "OR",
         "kw_not": "NOT",
