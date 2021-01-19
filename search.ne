@@ -1,5 +1,18 @@
 @{%
 const moo = require("moo");
+const { DateTime } = require("luxon");
+
+function wordsForDate(year, month, day) {
+  const when = DateTime.local(year, month, day);
+  return [
+    when.toISODate(),
+    when.toFormat("yyyy/LL/dd"),
+    when.toFormat("L/d/yy"),
+    when.toFormat("L/d/yyyy"),
+    when.toFormat("LL/dd/yy"),
+    when.toFormat("LL/dd/yyyy"),
+  ];
+}
 
 const lexer = moo.compile({
     double_quoted_string: {match: /"(?:\\["\\]|[^\n"\\])*"/u, value: s => s.slice(1, -1).replace(/\\"/g, '"') },
@@ -10,21 +23,22 @@ const lexer = moo.compile({
     colon: /:/u,
     slash: /[/]/u,
     dash: /-/u,
-    number: /(?:\d+(?:[.]\d+)?|(?:[.]\d+))(?=[ \t\n\r)])/u,
+    number: /(?:\p{Nd}+(?:[.]\p{Nd}+)?|(?:[.]\p{Nd}+))(?=\p{Z}|$|[)])/u,
     wildcarded_word: /[0-9\w?*]*[?*][\w?*]*/u,
     date: [
-        { match: /\d{4,4}[-/.]\d{1,2}[-/.]\d{1,2}(?=[ \t\n\r)])/u, value: s => {
+        { match: /\d{4,4}[-/.]\d{1,2}[-/.]\d{1,2}(?=\p{Z}|$|[)])/u, value: s => {
             const parts = s.split(/[-./]/);
-            return `${parts[0]}-${parts[1].padStart(2, "0")}-${parts[2].padStart(2, "0")}`;
+            return wordsForDate(parseInt(parts[0]), parseInt(parts[1]), parseInt(parts[2]));
         }},
-        { match: /\d{1,2}[-/.]\d{1,2}[-/.](?:\d{2,2}|\d{4,4})(?=[ \t\n\r)])/u, value: s => {
+        { match: /\d{1,2}[-/.]\d{1,2}[-/.](?:\d{2,2}|\d{4,4})(?=\p{Z}|$|[)])/u, value: s => {
             const parts = s.split(/[-./]/);
             let partialYear = parseInt(parts[2]);
             let year = partialYear >= 1000 ? partialYear : partialYear >= 70 ? 1900 + partialYear : 2000 + partialYear;
-            return `${year}-${parts[0].padStart(2, "0")}-${parts[1].padStart(2, "0")}`;
+
+            return wordsForDate(year, parseInt(parts[0]), parseInt(parts[1]));
         }},
     ],
-    word: {match: /[0-9A-Za-z]+[\w\-_]*/u, type: moo.keywords({
+    word: { match: /(?:\p{L}\p{M}*|\p{N}|\p{S}|\p{Pc}|\p{Pd}|\p{Po})+/u, type: moo.keywords({ //{match: /[0-9A-Za-z]+[\w\-_]*/u, type: moo.keywords({
         "kw_and": "AND",
         "kw_or": "OR",
         "kw_not": "NOT",
@@ -72,7 +86,8 @@ function __and(ax, wx) {
 function __word(wx) {
   return {
     type: 'WORD',
-    value: wx.value
+    value: wx.value,
+    text: wx.text
   }
 }
 
