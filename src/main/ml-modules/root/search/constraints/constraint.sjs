@@ -7,7 +7,7 @@ function toCts({ parsedQuery, options }) {
     if (constraintConfig != null) {
         const { type, faceted } = constraintConfig;
         const evaluator = typeModules[type] || (typeModules[type] = require(type));
-        return evaluator.toCts({ parsedQuery, constraintConfig });
+        return evaluator.toCts({ parsedQuery, options, constraintConfig });
     } else {
         return cts.trueQuery();
     }
@@ -43,11 +43,16 @@ function doFacet({ options, query }) {
     }).filter(v => v != null);
     
     return startValues.map(sv => {
-        return finishFacet({
+        const values = finishFacet({
             startValue: sv.startValue,
             constraintConfig: sv.constraintConfig,
             query
-        })
+        });
+
+        return {
+            name: sv.constraintConfig.name,
+            values
+        }
     });
 }
 

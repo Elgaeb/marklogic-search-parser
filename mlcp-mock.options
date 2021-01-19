@@ -6,8 +6,6 @@ localhost
 admin
 -password
 admin
--database
-ml-search-parser-content
 -input_file_path
 MOCK_DATA.json
 -input_file_type
@@ -19,6 +17,6 @@ id
 -output_uri_suffix
 .json
 -output_collections
-person
+person,mock
 -output_permissions
 rest-reader,read,rest-writer,update

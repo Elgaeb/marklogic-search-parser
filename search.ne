@@ -103,7 +103,7 @@ function __constraint(name, operator, value) {
     type: 'CONSTRAINT',
     name,
     operator,
-    value
+    value: value.text != null ? value.text : value.value
   }
 }
 
@@ -136,8 +136,8 @@ word_terminal -> %wildcarded_word {% ([wx]) => __word(wx) %}
 phrase_terminal -> %single_quoted_string {% ([wx]) => __phrase(wx) %}
 phrase_terminal -> %double_quoted_string {% ([wx]) => __phrase(wx) %}
 
-constraint_terminal -> %word equality_terminal literal_terminal {% ([wx, cx, tx]) => __constraint(wx.value, 'EQ', tx[0].value) %}
-constraint_terminal -> %word range_terminal literal_terminal {% ([wx, cx, tx]) => __constraint(wx.value, cx[0].value, tx[0].value) %}
+constraint_terminal -> %word equality_terminal literal_terminal {% ([wx, cx, tx]) => __constraint(wx.value, 'EQ', tx[0]) %}
+constraint_terminal -> %word range_terminal literal_terminal {% ([wx, cx, tx]) => __constraint(wx.value, cx[0].value, tx[0]) %}
 
 range_terminal -> %kw_lt
 range_terminal -> %kw_le

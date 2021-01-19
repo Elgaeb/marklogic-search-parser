@@ -24,8 +24,12 @@ function toCts({ parsedQuery, options = {} }) {
         case "PHRASE":
             return cts.wordQuery([].concat(...[parsedQuery.value]));
 
+        case "TRUE":
+            return cts.trueQuery();
+
         case "CONSTRAINT":
             return cons.toCts({ parsedQuery, options });
+
         default:
             break;
     }
@@ -89,7 +93,13 @@ class MLSearchParser {
         parser.feed(queryString);
 
         this.rawParsedQuery = parser.results;
-        this.parsedQuery = this.rawParsedQuery[0]
+        if(this.rawParsedQuery.length == 0) {
+            this.rawParsedQuery = [ {
+                type: "TRUE"
+            } ];
+        }
+        this.parsedQuery = this.rawParsedQuery[0];
+
         this.ctsQuery = toCts({
             parsedQuery: this.parsedQuery,
             options: this.options

@@ -1,6 +1,6 @@
 const { makeCtsQuery, makeReference } = require("typeConverters");
 
-function toCts({ parsedQuery, constraintConfig = {} }) {
+function toCts({ parsedQuery, options, constraintConfig = {} }) {
     const valueOptions = constraintConfig.value;
     return makeCtsQuery({ parsedQuery, constraintConfig, options, valueOptions });
 }
@@ -22,10 +22,11 @@ function finishFacet({ startValue, constraintConfig, query }) {
          });
     }
 
-    return {
-        constraintConfig,
-        out
-    };
+    return out;
+    // return {
+    //     constraintConfig,
+    //     out
+    // };
 }
 
 module.exports = {

@@ -5,6 +5,8 @@ const cons = require("/search/constraints/constraint")
 const { MLSearchParser, toCts } = require("/search/parser");
 const { generateMatches } = require("/search/matcher");
 
+const options = require("/search-options");
+
 // AND, OR, WORD
 function leaves(parsedQuery) {
     switch (parsedQuery.type) {
@@ -16,13 +18,13 @@ function leaves(parsedQuery) {
     }
 }
 
-const options = require("/search-options");
+const queryString =
+    // "JOHN DOE";
+    // "Gender IS F AND FirstName IS *c*";
+    "JOHN JANE (DOE OR DE LONG)";
 
-
-
-// const parser = new MLSearchParser({ queryString: "Gender IS F AND FirstName IS *c*", options });
-const parser = new MLSearchParser({ queryString: "", options });
-const results = fn.subsequence(cts.search(parser.ctsQuery, ["faceted"]), 1, 1);
+const parser = new MLSearchParser({ queryString, options });
+const results = fn.subsequence(cts.search(parser.ctsQuery, ["faceted"]), 1, 100);
 
 
 // for matching
@@ -38,6 +40,4 @@ cons.doFacet({
     query: parser.ctsQuery
 });
 
-// results
-
-parser.ctsQuery
+parser.parsedQuery

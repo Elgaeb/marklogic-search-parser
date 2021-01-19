@@ -11,11 +11,13 @@ spec(({ describe }) => {
                 "children": [
                     {
                         "type": "WORD",
-                        "value": "JOHN"
+                        "value": "JOHN",
+                        "text": "JOHN"
                     },
                     {
                         "type": "WORD",
-                        "value": "DOE"
+                        "value": "DOE",
+                        "text": "DOE"
                     }
                 ]
             };
@@ -34,11 +36,13 @@ spec(({ describe }) => {
                 "children": [
                     {
                         "type": "WORD",
-                        "value": "JOHN"
+                        "value": "JOHN",
+                        "text": "JOHN"
                     },
                     {
                         "type": "WORD",
-                        "value": "DOE"
+                        "value": "DOE",
+                        "text": "DOE"
                     }
                 ]
             };
@@ -53,40 +57,50 @@ spec(({ describe }) => {
     describe("A complex query", ({ it }) => {
         it("should produce the correct nested output", () => {
             const expected = {
-                "type": "AND",
-                "children": [
-                  {
-                    "type": "WORD",
-                    "value": "JOHN"
-                  },
-                  {
-                    "type": "WORD",
-                    "value": "JANE"
-                  },
-                  {
-                    "type": "OR",
-                    "children": [
-                      {
-                        "type": "WORD",
-                        "value": "DOE"
-                      },
-                      {
-                        "type": "AND",
-                        "children": [
-                          {
-                            "type": "WORD",
-                            "value": "DE"
-                          },
-                          {
-                            "type": "WORD",
-                            "value": "LONG"
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              };
+              "type": "AND",
+              "children": [
+                {
+                  "type": "AND",
+                  "children": [
+                    {
+                      "type": "WORD",
+                      "value": "JOHN",
+                      "text": "JOHN"
+                    },
+                    {
+                      "type": "WORD",
+                      "value": "JANE",
+                      "text": "JANE"
+                    }
+                  ]
+                },
+                {
+                  "type": "OR",
+                  "children": [
+                    {
+                      "type": "WORD",
+                      "value": "DOE",
+                      "text": "DOE"
+                    },
+                    {
+                      "type": "AND",
+                      "children": [
+                        {
+                          "type": "WORD",
+                          "value": "DE",
+                          "text": "DE"
+                        },
+                        {
+                          "type": "WORD",
+                          "value": "LONG",
+                          "text": "LONG"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            };
 
             const parser = new MLSearchParser({ queryString: "JOHN JANE (DOE OR DE LONG)" });
             const actual = parser.parsedQuery;
