@@ -91,24 +91,57 @@ function __word(wx) {
   return {
     type: 'WORD',
     value: wx.value,
-    text: wx.text
+    text: wx.text,
+    input: {
+      offset: wx.offset,
+      length: wx.text.length,
+    }
   }
 }
 
 function __phrase(wx) {
   return {
     type: 'PHRASE',
-    value: wx.value
+    value: wx.value,
+    text: wx.text,
+    input: {
+      offset: wx.offset,
+      length: wx.text.length,
+    }
   }
 }
 
+/*
 function __constraint(name, operator, value) {
   return {
     type: 'CONSTRAINT',
-    name,
+    name: name,
     operator,
     value: value.text != null ? value.text : value.value
   }
+}
+*/
+
+function __constraint(wx, operator, nx) {
+  const name = wx.value;
+  const value = nx.text != null ? nx.text : nx.value;
+
+  const offset = wx.offset;
+  const length = nx.input.length + nx.input.offset - offset;
+  return {
+    type: 'CONSTRAINT',
+    name: name,
+    operator,
+    value,
+    input: {
+      offset,
+      length
+    }
+  }
+}
+
+function __text(values) {
+  return [].concat(...values).map(v => v.text).join(" ");
 }
 
 var grammar = {
@@ -132,8 +165,8 @@ var grammar = {
     {"name": "word_terminal", "symbols": [(lexer.has("wildcarded_word") ? {type: "wildcarded_word"} : wildcarded_word)], "postprocess": ([wx]) => __word(wx)},
     {"name": "phrase_terminal", "symbols": [(lexer.has("single_quoted_string") ? {type: "single_quoted_string"} : single_quoted_string)], "postprocess": ([wx]) => __phrase(wx)},
     {"name": "phrase_terminal", "symbols": [(lexer.has("double_quoted_string") ? {type: "double_quoted_string"} : double_quoted_string)], "postprocess": ([wx]) => __phrase(wx)},
-    {"name": "constraint_terminal", "symbols": [(lexer.has("word") ? {type: "word"} : word), "equality_terminal", "literal_terminal"], "postprocess": ([wx, cx, tx]) => __constraint(wx.value, 'EQ', tx[0])},
-    {"name": "constraint_terminal", "symbols": [(lexer.has("word") ? {type: "word"} : word), "range_terminal", "literal_terminal"], "postprocess": ([wx, cx, tx]) => __constraint(wx.value, cx[0].value, tx[0])},
+    {"name": "constraint_terminal", "symbols": [(lexer.has("word") ? {type: "word"} : word), "equality_terminal", "literal_terminal"], "postprocess": ([wx, cx, tx]) => __constraint(wx, 'EQ', tx[0])},
+    {"name": "constraint_terminal", "symbols": [(lexer.has("word") ? {type: "word"} : word), "range_terminal", "literal_terminal"], "postprocess": ([wx, cx, tx]) => __constraint(wx, head(cx).value, head(tx))},
     {"name": "range_terminal", "symbols": [(lexer.has("kw_lt") ? {type: "kw_lt"} : kw_lt)]},
     {"name": "range_terminal", "symbols": [(lexer.has("kw_le") ? {type: "kw_le"} : kw_le)]},
     {"name": "range_terminal", "symbols": [(lexer.has("kw_gt") ? {type: "kw_gt"} : kw_gt)]},

@@ -54,10 +54,10 @@ class MLSearchParser {
     }
 
     parse(queryString) {
-        function flatten(parsedQuery) {
-            function flattenChildren(parsedQuery) {
+        function enrich(parsedQuery) {
+            function enrichChildren(parsedQuery) {
                 const children = [].concat(...parsedQuery.children
-                    .map(cq => flatten(cq))
+                    .map(cq => enrich(cq))
                     .map(cq => {
                         if (cq.type == parsedQuery.type) {
                             return cq.children;
@@ -79,11 +79,17 @@ class MLSearchParser {
 
             switch (parsedQuery.type) {
                 case "AND":
-                    return flattenChildren(parsedQuery);
+                    return enrichChildren(parsedQuery);
                 case "OR":
-                    return flattenChildren(parsedQuery);
+                    return enrichChildren(parsedQuery);
                 default:
-                    return { x: 1, ...parsedQuery };
+                    if(parsedQuery.input != null) {
+                        const { offset, length } = parsedQuery.input;
+                        if(offset != null && length != null) {
+                            parsedQuery.input.text = queryString.substring(offset, offset + length);
+                        }
+                    }
+                    return { ...parsedQuery };
             }
         }
 
@@ -98,7 +104,7 @@ class MLSearchParser {
                 type: "TRUE"
             } ];
         }
-        this.parsedQuery = this.rawParsedQuery[0];
+        this.parsedQuery = enrich(this.rawParsedQuery[0]);
 
         this.ctsQuery = toCts({
             parsedQuery: this.parsedQuery,

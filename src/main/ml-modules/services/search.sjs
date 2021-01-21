@@ -1,5 +1,6 @@
 const { MLSearchParser } = require("/search/parser");
 const constraint = require("/search/constraints/constraint");
+const { match } = require("/search/matcher");
 
 const options = require("/search-options");
 
@@ -39,7 +40,10 @@ function get(context, params) {
         query: parser.ctsQuery
     });
 
-    const resultsArr = results.toArray();
+    const resultsArr = results.toArray().map(doc => ({
+        matches: match({ parsedQuery: parser.parsedQuery, doc }),
+        content: doc
+    }));
 
     return {
         total: cts.estimate(cts.andQuery(ctsQueries)),
@@ -48,7 +52,7 @@ function get(context, params) {
         count: resultsArr.length,
         qtext,
         parsedQuery: parser.parsedQuery,
-        query: parser.ctsQuery,
+        // query: parser.ctsQuery,
         results: resultsArr,
         facets
     }

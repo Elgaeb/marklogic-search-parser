@@ -71,7 +71,7 @@ function writeResults(writeStream, results) {
 
 // const searchString = "JANE AND LONG AND DOE AND III";
 // const searchString = "JANE AND LONG OR DOE AND III";
-const searchString = "(JANE OR JOHN) 6/2/76"// 1.123 DOE&$^LONG OR Name GT JOHN";
+const searchString = "(JANE OR JOHN) 6/2/76 1.123 DOE OR Name : JOHN";
 //const searchString = "JOHN 6/2/76";
 
 const grammar = compileGrammar({

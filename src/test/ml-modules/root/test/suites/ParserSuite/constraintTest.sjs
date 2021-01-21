@@ -21,7 +21,7 @@ const options = require("/search-options");
 
 
 // const parser = new MLSearchParser({ queryString: "Gender IS F AND FirstName IS *c*", options });
-const parser = new MLSearchParser({ queryString: "", options });
+const parser = new MLSearchParser({ queryString: "c* AND Gender IS F AND FirstName IS c*", options });
 const results = fn.subsequence(cts.search(parser.ctsQuery, ["faceted"]), 1, 1);
 
 
@@ -40,4 +40,4 @@ cons.doFacet({
 
 // results
 
-parser.ctsQuery
+parser.parsedQuery

@@ -87,24 +87,57 @@ function __word(wx) {
   return {
     type: 'WORD',
     value: wx.value,
-    text: wx.text
+    text: wx.text,
+    input: {
+      offset: wx.offset,
+      length: wx.text.length,
+    }
   }
 }
 
 function __phrase(wx) {
   return {
     type: 'PHRASE',
-    value: wx.value
+    value: wx.value,
+    text: wx.text,
+    input: {
+      offset: wx.offset,
+      length: wx.text.length,
+    }
   }
 }
 
+/*
 function __constraint(name, operator, value) {
   return {
     type: 'CONSTRAINT',
-    name,
+    name: name,
     operator,
     value: value.text != null ? value.text : value.value
   }
+}
+*/
+
+function __constraint(wx, operator, nx) {
+  const name = wx.value;
+  const value = nx.text != null ? nx.text : nx.value;
+
+  const offset = wx.offset;
+  const length = nx.input.length + nx.input.offset - offset;
+  return {
+    type: 'CONSTRAINT',
+    name: name,
+    operator,
+    value,
+    input: {
+      offset,
+      length
+    }
+  }
+}
+
+function __text(values) {
+  return [].concat(...values).map(v => v.text).join(" ");
 }
 
 %}
@@ -136,8 +169,8 @@ word_terminal -> %wildcarded_word {% ([wx]) => __word(wx) %}
 phrase_terminal -> %single_quoted_string {% ([wx]) => __phrase(wx) %}
 phrase_terminal -> %double_quoted_string {% ([wx]) => __phrase(wx) %}
 
-constraint_terminal -> %word equality_terminal literal_terminal {% ([wx, cx, tx]) => __constraint(wx.value, 'EQ', tx[0]) %}
-constraint_terminal -> %word range_terminal literal_terminal {% ([wx, cx, tx]) => __constraint(wx.value, cx[0].value, tx[0]) %}
+constraint_terminal -> %word equality_terminal literal_terminal {% ([wx, cx, tx]) => __constraint(wx, 'EQ', tx[0]) %}
+constraint_terminal -> %word range_terminal literal_terminal {% ([wx, cx, tx]) => __constraint(wx, head(cx).value, head(tx)) %}
 
 range_terminal -> %kw_lt
 range_terminal -> %kw_le
