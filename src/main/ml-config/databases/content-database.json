@@ -24,6 +24,22 @@
       "collation": "http://marklogic.com/collation/",
       "range-value-positions": false,
       "invalid-values": "ignore"
+    },
+    {
+      "scalar-type": "dateTime",
+      "namespace-uri": null,
+      "localname": "updatedDateTime",
+      "collation": null,
+      "range-value-positions": false,
+      "invalid-values": "ignore"
+    },
+    {
+      "scalar-type": "date",
+      "namespace-uri": null,
+      "localname": "birthDate",
+      "collation": null,
+      "range-value-positions": false,
+      "invalid-values": "ignore"
     }
   ],
   "range-path-index": [

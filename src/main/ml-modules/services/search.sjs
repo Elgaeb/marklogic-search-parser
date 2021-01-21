@@ -1,6 +1,7 @@
 const { MLSearchParser } = require("/search/parser");
 const constraint = require("/search/constraints/constraint");
 const { match } = require("/search/matcher");
+const { makeSortOrder } = require("/search/sort");
 
 const options = require("/search-options");
 
@@ -15,6 +16,8 @@ function get(context, params) {
     const directory = params.directory;
     const start = asNumber({ value: params.start, defaultValue: 1 });
     const pageLength = asNumber({ value: params.pageLength, defaultValue: 10 });
+    const orderName = params.sort;
+    const reverse = !!params.reverse;
 
     const parser = new MLSearchParser({ queryString: qtext, options });
 
@@ -29,8 +32,9 @@ function get(context, params) {
         ctsQueries.push(cts.directoryQuery([].concat(...[collection]), "infinity"));
     }
 
+    const searchOptions = [].concat(...[ "faceted", makeSortOrder({ options, orderName, reverse }) ]);
     const results = fn.subsequence(
-        cts.search(cts.andQuery(ctsQueries), ["faceted"]),
+        cts.search(cts.andQuery(ctsQueries), searchOptions),
         start,
         pageLength
     );
@@ -54,7 +58,8 @@ function get(context, params) {
         parsedQuery: parser.parsedQuery,
         // query: parser.ctsQuery,
         results: resultsArr,
-        facets
+        facets,
+        searchOptions
     }
 
 };

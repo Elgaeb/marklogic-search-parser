@@ -10,12 +10,13 @@ const rangeOperators = {
 
 function makeReference({ valueOptions }) {
     const type = valueOptions.type;
+    const options = valueOptions.options == null ? [] : [].concat(...[valueOptions.options]);
 
     switch(type) {
         case "pathIndex":
-            return cts.pathReference(valueOptions.value);
+            return cts.pathReference(valueOptions.value, options);
         case "jsonPropertyIndex":
-            return cts.jsonPropertyReference(valueOptions.value);
+            return cts.jsonPropertyReference(valueOptions.value, options);
         default:
             return null;
     }
