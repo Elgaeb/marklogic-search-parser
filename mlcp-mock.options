@@ -7,7 +7,7 @@ admin
 -password
 admin
 -input_file_path
-MOCK_DATA.json
+src/test/mock-data/*.json
 -input_file_type
 delimited_json
 -uri_id

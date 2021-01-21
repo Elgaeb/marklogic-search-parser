@@ -24,7 +24,6 @@ const lexer = moo.compile({
     slash: /[/]/u,
     dash: /-/u,
     number: /(?:\p{Nd}+(?:[.]\p{Nd}+)?|(?:[.]\p{Nd}+))(?=\p{Z}|$|[)])/u,
-    wildcarded_word: /[0-9\w?*]*[?*][\w?*]*/u,
     date: [
         { match: /\d{4,4}[-/.]\d{1,2}[-/.]\d{1,2}(?=\p{Z}|$|[)])/u, value: s => {
             const parts = s.split(/[-./]/);
@@ -164,7 +163,6 @@ terminal_expression -> constraint_terminal {% head %}
 word_terminal -> %word {% ([wx]) => __word(wx) %}
 word_terminal -> %number {% ([wx]) => __word(wx) %}
 word_terminal -> %date {% ([wx]) => __word(wx) %}
-word_terminal -> %wildcarded_word {% ([wx]) => __word(wx) %}
 
 phrase_terminal -> %single_quoted_string {% ([wx]) => __phrase(wx) %}
 phrase_terminal -> %double_quoted_string {% ([wx]) => __phrase(wx) %}

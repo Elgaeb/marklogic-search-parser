@@ -28,7 +28,6 @@ const lexer = moo.compile({
     slash: /[/]/u,
     dash: /-/u,
     number: /(?:\p{Nd}+(?:[.]\p{Nd}+)?|(?:[.]\p{Nd}+))(?=\p{Z}|$|[)])/u,
-    wildcarded_word: /[0-9\w?*]*[?*][\w?*]*/u,
     date: [
         { match: /\d{4,4}[-/.]\d{1,2}[-/.]\d{1,2}(?=\p{Z}|$|[)])/u, value: s => {
             const parts = s.split(/[-./]/);
@@ -162,7 +161,6 @@ var grammar = {
     {"name": "word_terminal", "symbols": [(lexer.has("word") ? {type: "word"} : word)], "postprocess": ([wx]) => __word(wx)},
     {"name": "word_terminal", "symbols": [(lexer.has("number") ? {type: "number"} : number)], "postprocess": ([wx]) => __word(wx)},
     {"name": "word_terminal", "symbols": [(lexer.has("date") ? {type: "date"} : date)], "postprocess": ([wx]) => __word(wx)},
-    {"name": "word_terminal", "symbols": [(lexer.has("wildcarded_word") ? {type: "wildcarded_word"} : wildcarded_word)], "postprocess": ([wx]) => __word(wx)},
     {"name": "phrase_terminal", "symbols": [(lexer.has("single_quoted_string") ? {type: "single_quoted_string"} : single_quoted_string)], "postprocess": ([wx]) => __phrase(wx)},
     {"name": "phrase_terminal", "symbols": [(lexer.has("double_quoted_string") ? {type: "double_quoted_string"} : double_quoted_string)], "postprocess": ([wx]) => __phrase(wx)},
     {"name": "constraint_terminal", "symbols": [(lexer.has("word") ? {type: "word"} : word), "equality_terminal", "literal_terminal"], "postprocess": ([wx, cx, tx]) => __constraint(wx, 'EQ', tx[0])},
