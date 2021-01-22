@@ -1,14 +1,14 @@
 const { makeCtsQuery, makeReference } = require("typeConverters");
 
 function toCts({ parsedQuery, options, constraintConfig = {} }) {
-    const valueOptions = constraintConfig.value;
-    return makeCtsQuery({ parsedQuery, constraintConfig, options, valueOptions });
+    const ctsQuery = makeCtsQuery({ parsedQuery, constraintConfig, options, valueOptions: constraintConfig.value });
+    return constraintConfig.scope != null ? cts.jsonPropertyScopeQuery(constraintConfig.scope, ctsQuery) : ctsQuery;
 }
 
 function startFacet({ constraintConfig, query }) {
     const valueOptions = constraintConfig.value;
     const reference = makeReference({ valueOptions });
-    const additionalOptions = constraintConfig.options || [];
+    const additionalOptions = constraintConfig.facetOptions || [];
     return cts.values(reference, null, [].concat([ "concurrent", ...additionalOptions]), query);
 }
 
@@ -23,10 +23,6 @@ function finishFacet({ startValue, constraintConfig, query }) {
     }
 
     return out;
-    // return {
-    //     constraintConfig,
-    //     out
-    // };
 }
 
 module.exports = {

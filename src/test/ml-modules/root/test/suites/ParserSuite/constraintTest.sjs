@@ -19,9 +19,15 @@ function leaves(parsedQuery) {
 const options = require("/search-options");
 
 
+const queryString =
+    // "Gender IS F AND FirstName IS *c*"
+    // "2/2/87 AND Gender IS F AND FirstName IS cai*"
+    // "Quote IS 'lorem' Quote IS 5/3/98"
+    // "BirthDate EQ 3/3/97"
+    "Updated GT 2020-01-01"
+    ;
 
-// const parser = new MLSearchParser({ queryString: "Gender IS F AND FirstName IS *c*", options });
-const parser = new MLSearchParser({ queryString: "c* AND Gender IS F AND FirstName IS c*", options });
+const parser = new MLSearchParser({ queryString, options });
 const results = fn.subsequence(cts.search(parser.ctsQuery, ["faceted"]), 1, 1);
 
 
@@ -40,4 +46,7 @@ cons.doFacet({
 
 // results
 
-parser.parsedQuery
+[
+    parser.parsedQuery,
+    parser.ctsQuery
+];

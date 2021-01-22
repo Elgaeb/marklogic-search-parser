@@ -1,10 +1,12 @@
 const { makeCtsQuery, makeReference } = require("typeConverters");
 
 function toCts({ parsedQuery, options, constraintConfig = {} }) {
-    return cts.orQuery([
+    const ctsQuery = cts.orQuery([
         makeCtsQuery({ parsedQuery, constraintConfig, options, valueOptions: constraintConfig.value }),
         makeCtsQuery({ parsedQuery, constraintConfig, options, valueOptions: constraintConfig.code }),
     ]);
+
+    return constraintConfig.scope != null ? cts.jsonPropertyScopeQuery(constraintConfig.scope, ctsQuery) : ctsQuery;
 }
 
 function startFacet({ constraintConfig, query }) {
@@ -12,7 +14,7 @@ function startFacet({ constraintConfig, query }) {
     const facetType = constraintConfig.facetType || "value";
     const options = constraintConfig[facetType];
     const reference = makeReference({ valueOptions: options });
-    const additionalOptions = constraintConfig.options || [];
+    const additionalOptions = constraintConfig.facetOptions || [];
     return cts.values(reference, null, [].concat([ "concurrent", ...additionalOptions]), query);
 }
 

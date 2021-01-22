@@ -1,12 +1,27 @@
 const options = {
     constraints: [
         {
+            name: "BirthDate",
+            type: "value",
+            faceted: false,
+            wildcarded: true,
+            facetOptions: ["item-order", "descending", "fragment-frequency", "limit=3"],
+            value: { type: "jsonPropertyIndex", value: "birthDate" }
+        },
+        {
+            name: "Updated",
+            type: "value",
+            faceted: false,
+            wildcarded: false,
+            facetOptions: ["item-order", "descending", "fragment-frequency", "limit=3"],
+            value: { type: "jsonPropertyIndex", value: "updatedDateTime" }
+        },
+        {
             name: "FirstName",
             type: "value",
             // faceted: false,
             wildcarded: true,
-            includeMissingValues: false,
-            options: ["item-order", "ascending", "fragment-frequency", "limit=3"],
+            facetOptions: ["item-order", "ascending", "fragment-frequency", "limit=3"],
             value: { type: "pathIndex", value: "//Name/firstName" }
         },
         {
@@ -14,8 +29,7 @@ const options = {
             type: "value",
             faceted: true,
             wildcarded: false,
-            includeMissingValues: true,
-            options: ["frequency-order", "descending", "fragment-frequency", "limit=10"],
+            facetOptions: ["frequency-order", "descending", "fragment-frequency", "limit=10"],
             value: { type: "jsonPropertyIndex", value: "race" },
         },
         {
@@ -23,10 +37,15 @@ const options = {
             type: "code-value",
             faceted: true,
             wildcarded: false,
-            container: "Gender",
-            includeMissingValues: true,
+            scope: "Gender",
             code: { type: "jsonPropertyIndex", value: "genderCode" },
             value: { type: "jsonPropertyIndex", value: "gender" },
+        },
+        {
+            name: "Quote",
+            type: "value",
+            wildcarded: true,
+            value: { type: "jsonProperty", value: "favoriteQuote", useWordQuery: true },
         }
     ],
     returnCtsQuery: false,

@@ -6,8 +6,10 @@ function id(x) { return x[0]; }
 const moo = require("moo");
 const { DateTime } = require("luxon");
 
-function wordsForDate(year, month, day) {
+function dateValue(year, month, day) {
   const when = DateTime.local(year, month, day);
+  return when.toISODate();
+  /*
   return [
     when.toISODate(),
     when.toFormat("yyyy/LL/dd"),
@@ -16,6 +18,7 @@ function wordsForDate(year, month, day) {
     when.toFormat("LL/dd/yy"),
     when.toFormat("LL/dd/yyyy"),
   ];
+  */
 }
 
 const lexer = moo.compile({
@@ -25,20 +28,22 @@ const lexer = moo.compile({
     lparen: /[(]/u,
     rparen: /[)]/u,
     colon: /:/u,
-    slash: /[/]/u,
-    dash: /-/u,
-    number: /(?:\p{Nd}+(?:[.]\p{Nd}+)?|(?:[.]\p{Nd}+))(?=\p{Z}|$|[)])/u,
+//    slash: /[/]/u,
+//    dash: /-/u,
+//    number: /(?:\p{Nd}+(?:[.]\p{Nd}+)?|(?:[.]\p{Nd}+))(?=\p{Z}|$|[)])/u,
+    decimal: /(?:\p{Nd}*[.]\p{Nd}+(?=\p{Z}|$|[)]))/u,
+    integer: /\p{Nd}+(?=\p{Z}|$|[)])/u,
     date: [
         { match: /\d{4,4}[-/.]\d{1,2}[-/.]\d{1,2}(?=\p{Z}|$|[)])/u, value: s => {
             const parts = s.split(/[-./]/);
-            return wordsForDate(parseInt(parts[0]), parseInt(parts[1]), parseInt(parts[2]));
+            return dateValue(parseInt(parts[0]), parseInt(parts[1]), parseInt(parts[2]));
         }},
         { match: /\d{1,2}[-/.]\d{1,2}[-/.](?:\d{2,2}|\d{4,4})(?=\p{Z}|$|[)])/u, value: s => {
             const parts = s.split(/[-./]/);
             let partialYear = parseInt(parts[2]);
             let year = partialYear >= 1000 ? partialYear : partialYear >= 70 ? 1900 + partialYear : 2000 + partialYear;
 
-            return wordsForDate(year, parseInt(parts[0]), parseInt(parts[1]));
+           return dateValue(year, parseInt(parts[0]), parseInt(parts[1]));
         }},
     ],
     word: { match: /(?:\p{L}\p{M}*|\p{N}|\p{S}|\p{Pc}|\p{Pd}|\p{Po})+/u, type: moo.keywords({ //{match: /[0-9A-Za-z]+[\w\-_]*/u, type: moo.keywords({
@@ -88,9 +93,57 @@ function __and(ax, wx) {
 
 function __word(wx) {
   return {
-    type: 'WORD',
-    value: wx.value,
-    text: wx.text,
+    type: 'VALUE',
+    value: {
+      dataType: "string",
+      value: wx.value,
+      text: wx.text
+    },
+    input: {
+      offset: wx.offset,
+      length: wx.text.length,
+    }
+  }
+}
+
+function __decimal(wx) {
+  return {
+    type: 'VALUE',
+    value: {
+      dataType: "decimal",
+      value: parseFloat(wx.value),
+      text: wx.text
+    },
+    input: {
+      offset: wx.offset,
+      length: wx.text.length,
+    }
+  }
+}
+
+function __integer(wx) {
+  return {
+    type: 'VALUE',
+    value: {
+      dataType: "integer",
+      value: parseFloat(wx.value),
+      text: wx.text
+    },
+    input: {
+      offset: wx.offset,
+      length: wx.text.length,
+    }
+  }
+}
+
+function __date(wx) {
+  return {
+    type: 'VALUE',
+    value: {
+      dataType: "date",
+      value: wx.value,
+      text: wx.text
+    },
     input: {
       offset: wx.offset,
       length: wx.text.length,
@@ -100,9 +153,12 @@ function __word(wx) {
 
 function __phrase(wx) {
   return {
-    type: 'PHRASE',
-    value: wx.value,
-    text: wx.text,
+    type: 'VALUE',
+    value: {
+      dataType: "phrase",
+      value: wx.value,
+      text: wx.text
+    },
     input: {
       offset: wx.offset,
       length: wx.text.length,
@@ -110,20 +166,9 @@ function __phrase(wx) {
   }
 }
 
-/*
-function __constraint(name, operator, value) {
-  return {
-    type: 'CONSTRAINT',
-    name: name,
-    operator,
-    value: value.text != null ? value.text : value.value
-  }
-}
-*/
-
 function __constraint(wx, operator, nx) {
   const name = wx.value;
-  const value = nx.text != null ? nx.text : nx.value;
+  const value = nx.value; //nx.text != null ? nx.text : nx.value;
 
   const offset = wx.offset;
   const length = nx.input.length + nx.input.offset - offset;
@@ -139,10 +184,6 @@ function __constraint(wx, operator, nx) {
   }
 }
 
-function __text(values) {
-  return [].concat(...values).map(v => v.text).join(" ");
-}
-
 var grammar = {
     Lexer: lexer,
     ParserRules: [
@@ -155,16 +196,16 @@ var grammar = {
     {"name": "and_expression", "symbols": ["group_expression"], "postprocess": head},
     {"name": "group_expression", "symbols": [(lexer.has("lparen") ? {type: "lparen"} : lparen), "expression", (lexer.has("rparen") ? {type: "rparen"} : rparen)], "postprocess": ([lp, ex, rp]) => ex},
     {"name": "group_expression", "symbols": ["terminal_expression"], "postprocess": head},
-    {"name": "terminal_expression", "symbols": ["word_terminal"], "postprocess": head},
-    {"name": "terminal_expression", "symbols": ["phrase_terminal"], "postprocess": head},
+    {"name": "terminal_expression", "symbols": ["value_terminal"], "postprocess": head},
     {"name": "terminal_expression", "symbols": ["constraint_terminal"], "postprocess": head},
-    {"name": "word_terminal", "symbols": [(lexer.has("word") ? {type: "word"} : word)], "postprocess": ([wx]) => __word(wx)},
-    {"name": "word_terminal", "symbols": [(lexer.has("number") ? {type: "number"} : number)], "postprocess": ([wx]) => __word(wx)},
-    {"name": "word_terminal", "symbols": [(lexer.has("date") ? {type: "date"} : date)], "postprocess": ([wx]) => __word(wx)},
-    {"name": "phrase_terminal", "symbols": [(lexer.has("single_quoted_string") ? {type: "single_quoted_string"} : single_quoted_string)], "postprocess": ([wx]) => __phrase(wx)},
-    {"name": "phrase_terminal", "symbols": [(lexer.has("double_quoted_string") ? {type: "double_quoted_string"} : double_quoted_string)], "postprocess": ([wx]) => __phrase(wx)},
-    {"name": "constraint_terminal", "symbols": [(lexer.has("word") ? {type: "word"} : word), "equality_terminal", "literal_terminal"], "postprocess": ([wx, cx, tx]) => __constraint(wx, 'EQ', tx[0])},
-    {"name": "constraint_terminal", "symbols": [(lexer.has("word") ? {type: "word"} : word), "range_terminal", "literal_terminal"], "postprocess": ([wx, cx, tx]) => __constraint(wx, head(cx).value, head(tx))},
+    {"name": "value_terminal", "symbols": [(lexer.has("word") ? {type: "word"} : word)], "postprocess": ([wx]) => __word(wx)},
+    {"name": "value_terminal", "symbols": [(lexer.has("decimal") ? {type: "decimal"} : decimal)], "postprocess": ([wx]) => __decimal(wx)},
+    {"name": "value_terminal", "symbols": [(lexer.has("integer") ? {type: "integer"} : integer)], "postprocess": ([wx]) => __integer(wx)},
+    {"name": "value_terminal", "symbols": [(lexer.has("date") ? {type: "date"} : date)], "postprocess": ([wx]) => __date(wx)},
+    {"name": "value_terminal", "symbols": [(lexer.has("single_quoted_string") ? {type: "single_quoted_string"} : single_quoted_string)], "postprocess": ([wx]) => __phrase(wx)},
+    {"name": "value_terminal", "symbols": [(lexer.has("double_quoted_string") ? {type: "double_quoted_string"} : double_quoted_string)], "postprocess": ([wx]) => __phrase(wx)},
+    {"name": "constraint_terminal", "symbols": [(lexer.has("word") ? {type: "word"} : word), "equality_terminal", "value_terminal"], "postprocess": ([wx, cx, tx]) => __constraint(wx, 'EQ', tx)},
+    {"name": "constraint_terminal", "symbols": [(lexer.has("word") ? {type: "word"} : word), "range_terminal", "value_terminal"], "postprocess": ([wx, cx, tx]) => __constraint(wx, head(cx).value, tx)},
     {"name": "range_terminal", "symbols": [(lexer.has("kw_lt") ? {type: "kw_lt"} : kw_lt)]},
     {"name": "range_terminal", "symbols": [(lexer.has("kw_le") ? {type: "kw_le"} : kw_le)]},
     {"name": "range_terminal", "symbols": [(lexer.has("kw_gt") ? {type: "kw_gt"} : kw_gt)]},
@@ -172,10 +213,7 @@ var grammar = {
     {"name": "equality_terminal$subexpression$1", "symbols": [(lexer.has("kw_eq") ? {type: "kw_eq"} : kw_eq)]},
     {"name": "equality_terminal$subexpression$1", "symbols": [(lexer.has("kw_is") ? {type: "kw_is"} : kw_is)]},
     {"name": "equality_terminal$subexpression$1", "symbols": [(lexer.has("colon") ? {type: "colon"} : colon)]},
-    {"name": "equality_terminal", "symbols": ["equality_terminal$subexpression$1"]},
-    {"name": "literal_terminal$subexpression$1", "symbols": ["word_terminal"]},
-    {"name": "literal_terminal$subexpression$1", "symbols": ["phrase_terminal"]},
-    {"name": "literal_terminal", "symbols": ["literal_terminal$subexpression$1"], "postprocess": head}
+    {"name": "equality_terminal", "symbols": ["equality_terminal$subexpression$1"]}
 ]
   , ParserStart: "expression"
 }

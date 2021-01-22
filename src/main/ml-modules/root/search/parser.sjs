@@ -1,6 +1,7 @@
 const nearley = require("nearley");
 const grammar = require("grammar");
 const cons = require("constraints/constraint");
+const { valueForWordQuery } = require("constraints/typeConverters")
 
 function toCts({ parsedQuery, options = {} }) {
 
@@ -20,9 +21,9 @@ function toCts({ parsedQuery, options = {} }) {
         case "OR":
             return cts.orQuery(collectChildren(parsedQuery));
 
-        case "WORD":
-        case "PHRASE":
-            return cts.wordQuery([].concat(...[parsedQuery.value]));
+        case "VALUE":
+            const values = valueForWordQuery({ parsedQuery });
+            return cts.wordQuery([].concat(...[values]));
 
         case "TRUE":
             return cts.trueQuery();
