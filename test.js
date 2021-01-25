@@ -79,7 +79,7 @@ function writeResults(writeStream, results) {
 // const searchString = "Quote IS 12/12/90";
 // const searchString = "12/12/90 'this is a test' word 123 .12 123.45";
 // const searchString = "Quote IS 'lorem' Quote GT 5/3/98";
-const searchString = "Updated GT 2020-01-01";
+const searchString = "Updated:2020-01-01";
 
 const grammar = compileGrammar({
     grammar: fs.readFileSync('./search.ne', 'utf8'),

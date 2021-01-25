@@ -42,7 +42,14 @@ const lexer = moo.compile({
            return dateValue(year, parseInt(parts[0]), parseInt(parts[1]));
         }},
     ],
-    word: { match: /(?:\p{L}\p{M}*|\p{N}|\p{S}|\p{Pc}|\p{Pd}|\p{Po})+/u, type: moo.keywords({ //{match: /[0-9A-Za-z]+[\w\-_]*/u, type: moo.keywords({
+    word: {
+      match: 
+        // /[^\P{Po}:]+/u,
+        /(?:\p{L}\p{M}*|\p{N}|\p{S}|\p{Pc}|\p{Pd}|[^\P{Po}:])+/u, 
+        // /(?:\p{L}\p{M}*|\p{N}|\p{S}|\p{Pc}|\p{Pd}|\p{Po})+/u, 
+        // /[0-9A-Za-z]+[\w\-_]*/u, type: moo.keywords({
+      lineBreaks: true,
+      type: moo.keywords({ 
         "kw_and": "AND",
         "kw_or": "OR",
         "kw_not": "NOT",
