@@ -53,6 +53,30 @@ function referenceScalarType({ ref }) {
     return refObj[Object.keys(refObj)[0]].scalarType;
 }
 
+function parseNumber({ value, parse }) {
+    switch(value.dataType) {
+        case "phrase":
+        case "string":
+            let stringValue = value.value.trim();
+            let v = parseInt(stringValue);
+            if(isNaN(v)) {
+                return /^(y|yes|t|true)$/i.test(value.value.trim()) ? 1 : 0;
+            } else {
+                return v;
+            }
+        case "date":
+            const dateFromISO = DateTime.fromISO(value.value, { zone: "local" });
+            return dateFromISO.toMillis();
+        case "integer":
+        case "decimal":
+            return parse(value.value);
+        default:
+            return value.value;
+    }
+
+}
+
+
 function valueForReferenceQuery({ parsedQuery, ref }) {
     const scalarType = referenceScalarType({ ref });
     const { value } = parsedQuery;
@@ -60,29 +84,51 @@ function valueForReferenceQuery({ parsedQuery, ref }) {
     switch(scalarType) {
         case "int":
         case "long":
+            return parseNumber({value, parse: parseInt});
+
         case "unsignedInt":
         case "unsignedLong":
+            return parseNumber({value, parse: x => Math.abs(parseInt(x)) });
+
         case "float":
         case "double":
         case "decimal":
-            return value.value;
+            return parseNumber({value, parse: x => parseFloat });
 
         case "date":
-            throw value.value;
-            return value.value;
+            switch(value.dataType) {
+                case "decimal":
+                case "integer":
+                    const dateFromMillis = DateTime.fromMillis(value.value, { zone: "local" });
+                    return dateFromMillis.toISODate();
+
+                case "date":
+                    return value.value;
+
+                case "phrase":
+                case "string":
+                default:
+                    const dateFromISO = DateTime.fromISO(value.value, { zone: "local" });
+                    return dateFromISO.isValid() ? dateFromISO.toISODate() : null;
+            }
 
         case "dateTime":
             switch(value.dataType) {
-                case "date":
-                    const dateFromISO = DateTime.fromISO(value.value, { zone: "local" });
-                    return dateFromISO.toISO();
                 case "decimal":
                 case "integer":
                     const dateFromMillis = DateTime.fromMillis(value.value, { zone: "local" });
                     return dateFromMillis.toISO();
+
+                case "phrase":
+                case "string":
+                case "date":
                 default:
-                    return value.value;
+                    const dateFromISO = DateTime.fromISO(value.value, { zone: "local" });
+                    return dateFromISO.toISO();
             }
+
+        case "string":
+            return "" + value.value;
 
         case "time":
         case "gYearMonth":
@@ -91,7 +137,6 @@ function valueForReferenceQuery({ parsedQuery, ref }) {
         case "gDay":
         case "yearMonthDuration":
         case "dayTimeDuration":
-        case "string":
         case "anyURI":
         default:
             switch(value.dataType) {
@@ -120,7 +165,9 @@ function makeCtsQuery({ parsedQuery, constraintConfig, options, valueOptions }) 
                     valueForReferenceQuery({ parsedQuery, ref }) :
                     cts.valueMatch(ref, "" + parsedQuery.value.value);
     
-                return cts.rangeQuery(ref, rangeOperator, desiredValue);
+                return desiredValue == null ? 
+                    cts.falseQuery() : 
+                    cts.rangeQuery(ref, rangeOperator, desiredValue);
     
             case "jsonProperty":
                 const ctsOptions = [
