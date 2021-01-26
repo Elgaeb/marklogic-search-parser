@@ -1,7 +1,7 @@
 const _ = require("underscore");
 const { toCts } = require("parser");
 
-function generateMatches({ doc, query, parsedQuery }) {
+function generateMatches({ doc, query, parsedQuery, dictionaryLookup }) {
     const matches = [];
     function callback(text, node, queries, start) {
         const path = [];
@@ -45,10 +45,14 @@ function generateMatches({ doc, query, parsedQuery }) {
             }
         }
 
+        const fullPath = path.filter(p => p.nodeName != null).reverse().map(p => p.nodeName).join(".");
+        const pathDescription = dictionaryLookup({ path: fullPath })
+
         const match = {
-            path: path.filter(p => p.nodeName != null).reverse().map(p => p.nodeName).join("."),
+            path: fullPath,
+            pathDescription,
             node: node.toString(),
-            text
+            text,
         };
 
         if(parsedQuery.input != null && parsedQuery.input.text != null) {
@@ -72,7 +76,7 @@ function generateMatches({ doc, query, parsedQuery }) {
     return matches;
 }
 
-function doMatch({ parsedQuery, doc }) {
+function doMatch({ parsedQuery, doc, dictionaryLookup }) {
     function doChildMatch({ parsedQuery, doc, abortOnMiss }) {
         const matches = {
             matched: true,
@@ -80,7 +84,7 @@ function doMatch({ parsedQuery, doc }) {
         };
 
         for(let cq of parsedQuery.children) {
-            const childMatch = doMatch({ parsedQuery: cq, doc });
+            const childMatch = doMatch({ parsedQuery: cq, doc, dictionaryLookup });
             if(childMatch.matched) {
                 matches.matches = [].concat(...[ matches.matches, childMatch.matches ]);
             } else  if(abortOnMiss) {
@@ -106,19 +110,21 @@ function doMatch({ parsedQuery, doc }) {
 
         default:
             let query = toCts({ parsedQuery, options });
-            let matches = generateMatches({ doc, query, parsedQuery });
+            let matches = generateMatches({ doc, query, parsedQuery, dictionaryLookup });
             return (matches != null && matches.length > 0) ? 
                 { matched: true, matches } : 
                 { matched: false, matches: [] };
     }
 }
 
-function match({ parsedQuery, doc }) {
-    return doMatch({ parsedQuery, doc }).matches;
+function match({ parsedQuery, doc, dictionaryLookup }) {
+    return doMatch({ parsedQuery, doc, dictionaryLookup }).matches;
 }
 
 module.exports = {
     match,
+
+    // exported for testing only...
     doMatch,
     generateMatches
 };

@@ -4,6 +4,7 @@ const { match } = require("/search/matcher");
 const { makeSortOrder } = require("/search/sort");
 
 const options = require("/search-options");
+const dictionaryLookup = require("/data-dictionary.sjs")
 
 function asNumber({ value, defaultValue }) {
     const val = parseInt(value);
@@ -45,7 +46,7 @@ function get(context, params) {
     });
 
     const resultsArr = results.toArray().map(doc => ({
-        matches: match({ parsedQuery: parser.parsedQuery, doc }),
+        matches: match({ parsedQuery: parser.parsedQuery, doc, dictionaryLookup }),
         content: doc
     }));
 

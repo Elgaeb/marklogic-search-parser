@@ -24,7 +24,8 @@ const queryString =
     // "2/2/87 AND Gender IS F AND FirstName IS cai*"
     // "Quote IS 'lorem' Quote IS 5/3/98"
     // "BirthDate EQ 3/3/97"
-    "Updated GT 2020-01-01"
+    // "Updated GT '2020-01-01'"
+    "Updated GT 1577836800000"
     ;
 
 const parser = new MLSearchParser({ queryString, options });
