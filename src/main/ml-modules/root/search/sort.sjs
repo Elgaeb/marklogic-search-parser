@@ -1,11 +1,6 @@
 const { makeReference } = require('constraints/typeConverters')
 
-function toSortOrder({ order, reverse = false }) {
-    let direction = order.direction == "ascending" ? "ascending" : "descending";
-    if(reverse) {
-        direction = direction == "ascending" ? "descending" : "ascending";
-    }
-
+function toSortOrder({ order, direction }) {
     const options = [ direction ];
 
     switch (order.type) {
@@ -35,15 +30,19 @@ function toSortOrder({ order, reverse = false }) {
 
 function makeSortOrder({ options, orderName, reverse = false }) {
     let sortOrderName = orderName == null ? options.defaultSortOrder : orderName;
+    let direction = order.direction == "ascending" ? "ascending" : "descending";
+    if(reverse) {
+        direction = direction == "ascending" ? "descending" : "ascending";
+    }
 
     if(sortOrderName == null) {
-        return cts.scoreOrder();
+        return cts.scoreOrder([ direction ]);
     }
 
     let orderOptions = options.sortOrder[sortOrderName];
 
     if(orderOptions == null) {
-        return cts.scoreOrder();
+        return cts.scoreOrder([ direction ]);
     }
 
     return orderOptions.map(order => toSortOrder({ order, reverse }));

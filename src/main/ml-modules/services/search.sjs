@@ -11,6 +11,12 @@ function asNumber({ value, defaultValue }) {
     return isNaN(val) ? defaultValue : val;
 }
 
+function opt({ propertyName, params, defaultValue }) {
+    return params == null || params[propertyName] == null ?
+        defaultValue :
+        params[propertyName];
+}
+
 function get(context, params) {
     const qtext = params.q || "";
     const collection = params.collection;
@@ -20,10 +26,19 @@ function get(context, params) {
     const orderName = params.sort;
     const reverse = !!params.reverse;
 
+    const returnQuery = opt({ propertyName: 'returnQuery', params, defaultValue: false });
+    const returnParsedQuery = opt({ propertyName: 'returnParsedQuery', params, defaultValue: false });
+    const returnCtsQuery = opt({ propertyName: 'returnCtsQuery', params, defaultValue: false });
+    const returnResults = opt({ propertyName: 'returnResults', params, defaultValue: true });
+    const returnMatches = opt({ propertyName: 'returnMatches', params, defaultValue: true });
+    const returnFacets = opt({ propertyName: 'returnFacets', params, defaultValue: true });
+    const returnOptions = opt({ propertyName: 'returnQuery', params, defaultValue: false });
+
+    const results = {};
+
     const parser = new MLSearchParser({ queryString: qtext, options });
 
     const ctsQueries = [parser.ctsQuery];
-    const queryOptions = ["faceted"];
 
     if(collection != null) {
         ctsQueries.push(cts.collectionQuery([].concat(...[collection])));
@@ -40,29 +55,47 @@ function get(context, params) {
         pageLength
     );
 
-    const facets = constraint.doFacet({
-        options,
-        query: parser.ctsQuery
-    });
-
-    const resultsArr = results.toArray().map(doc => ({
-        matches: match({ parsedQuery: parser.parsedQuery, doc, dictionaryLookup }),
-        content: doc
-    }));
-
-    return {
-        total: cts.estimate(cts.andQuery(ctsQueries)),
-        start,
-        pageLength,
-        count: resultsArr.length,
-        qtext,
-        parsedQuery: parser.parsedQuery,
-        // query: parser.ctsQuery,
-        results: resultsArr,
-        facets,
-        searchOptions
+    if(returnFacets) {
+        results.facets = constraint.doFacet({
+            options,
+            query: parser.ctsQuery
+        });
     }
 
+    const resultsArr = results.toArray().map(doc => {
+        const docResult = {
+            content: doc
+        };
+
+        if(returnMatches) {
+            docResult.matches = match({ parsedQuery: parser.parsedQuery, doc, dictionaryLookup });
+        }
+
+        return docResult;
+    });
+
+    results.total = cts.estimate(cts.andQuery(ctsQueries));
+    results.start = start;
+    results.pageLength = pageLength;
+    results.count = resultsArr.length;
+
+    if(returnQuery) {
+        results.query = qtext;
+    }
+    if(returnParsedQuery) {
+        results.parsedQuery = parser.parsedQuery;
+    }
+    if(returnCtsQuery) {
+        results.ctsQuery = parser.ctsQuery;
+    }
+    if(returnResults) {
+        results.results = resultsArr;
+    }
+    if(returnOptions) {
+        results.options = options;
+    }
+
+    return results;
 };
 
 function post(context, params, input) {

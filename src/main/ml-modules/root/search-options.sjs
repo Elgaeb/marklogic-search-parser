@@ -48,10 +48,12 @@ const options = {
             value: { type: "jsonProperty", value: "favoriteQuote", useWordQuery: true },
         }
     ],
+    returnQuery: true,
     returnCtsQuery: false,
-    returnParsedQuery: true,
-    returnMatches: true,
     returnResults: true,
+    returnMatches: true,
+    returnFacets: true,
+    returnOptions: true,
     defaultSortOrder: "birthDate",
     sortOrder: {
         birthDate: [
