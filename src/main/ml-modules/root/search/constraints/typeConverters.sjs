@@ -73,7 +73,6 @@ function parseNumber({ value, parse }) {
         default:
             return value.value;
     }
-
 }
 
 

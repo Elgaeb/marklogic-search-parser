@@ -2,14 +2,14 @@ const options = {
     constraints: [
         {
             name: "Collection",
-            type: "collection",
+            type: "constraints/collection",
             faceted: true,
             wildcarded: true,
             "facetOptions": ["frequency-order", "descending", "fragment-frequency", "limit=20"]
         },
         {
             name: "BirthDate",
-            type: "value",
+            type: "constraints/value",
             faceted: false,
             wildcarded: true,
             facetOptions: ["item-order", "descending", "fragment-frequency", "limit=3"],
@@ -17,7 +17,7 @@ const options = {
         },
         {
             name: "Updated",
-            type: "value",
+            type: "constraints/value",
             faceted: false,
             wildcarded: false,
             facetOptions: ["item-order", "descending", "fragment-frequency", "limit=3"],
@@ -25,7 +25,7 @@ const options = {
         },
         {
             name: "FirstName",
-            type: "value",
+            type: "constraints/value",
             // faceted: false,
             wildcarded: true,
             facetOptions: ["item-order", "ascending", "fragment-frequency", "limit=3"],
@@ -33,7 +33,7 @@ const options = {
         },
         {
             name: "Race",
-            type: "value",
+            type: "constraints/value",
             faceted: true,
             wildcarded: false,
             facetOptions: ["frequency-order", "descending", "fragment-frequency", "limit=10"],
@@ -41,7 +41,7 @@ const options = {
         },
         {
             name: "Gender",
-            type: "code-value",
+            type: "constraints/code-value",
             faceted: true,
             wildcarded: false,
             scope: "Gender",
@@ -50,7 +50,7 @@ const options = {
         },
         {
             name: "Quote",
-            type: "value",
+            type: "constraints/value",
             wildcarded: true,
             value: { type: "jsonProperty", value: "favoriteQuote", useWordQuery: true },
         }

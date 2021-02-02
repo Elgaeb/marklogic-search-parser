@@ -51,7 +51,6 @@ class MLSearchParser {
         if (queryString != null) {
             this.parse(queryString);
         }
-
     }
 
     parse(queryString) {

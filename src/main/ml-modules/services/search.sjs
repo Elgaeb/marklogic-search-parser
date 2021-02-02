@@ -1,7 +1,4 @@
-const { MLSearchParser } = require("/search/parser");
-const constraint = require("/search/constraints/constraint");
-const { match } = require("/search/matcher");
-const { makeSortOrder } = require("/search/sort");
+const { SearchParser } = require('/search/SearchParser');
 
 const options = require("/search-options");
 const dictionaryLookup = require("/data-dictionary.sjs")
@@ -40,7 +37,7 @@ function get(context, params) {
 
     const results = {};
 
-    const parser = new MLSearchParser({ queryString: qtext, options });
+    const parser = new SearchParser({ queryString: qtext, options });
 
     const ctsQueries = [parser.ctsQuery];
 
@@ -52,7 +49,7 @@ function get(context, params) {
         ctsQueries.push(cts.directoryQuery([].concat(...[collection]), "infinity"));
     }
 
-    const searchOptions = [].concat(...[ "faceted", makeSortOrder({ options, orderName, reverse }) ]);
+    const searchOptions = [].concat(...[ "faceted", parser.makeSortOrder({ options, orderName, reverse }) ]);
     const searchResults = fn.subsequence(
         cts.search(cts.andQuery(ctsQueries), searchOptions),
         start,
@@ -60,7 +57,7 @@ function get(context, params) {
     );
 
     if(returnFacets) {
-        results.facets = constraint.doFacet({
+        results.facets = parser.doFacet({
             options,
             query: parser.ctsQuery
         });
@@ -72,7 +69,7 @@ function get(context, params) {
         };
 
         if(returnMatches) {
-            docResult.matches = match({ parsedQuery: parser.parsedQuery, doc, dictionaryLookup });
+            docResult.matches = parser.match({ parsedQuery: parser.parsedQuery, doc, dictionaryLookup });
         }
 
         return docResult;

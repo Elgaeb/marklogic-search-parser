@@ -7,8 +7,8 @@ const options = require("/search-options");
 
 const context = {};
 const params = {
-    // q: "Gender IS F AND FirstName IS *ï* Quote IS est 'Morbi        porttitor'",
-    q: "Collection IS m* AND FirstName IS c*",
+    q: "Gender IS F AND FirstName IS *ï* Quote IS est 'Morbi        porttitor'",
+    // q: "Collection IS m* AND FirstName IS c*",
     // collection: "",
     // directory: "",
     start: 1,
