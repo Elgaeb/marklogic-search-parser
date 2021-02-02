@@ -193,6 +193,94 @@ class TypeConverter {
     }
 }
 
+class PathMatcher {
+    constructor({ options }) {
+        this.options = options;
+    }
+    
+    /**
+     * @private
+     */
+    buildMatchPath({node, child = null, path = []}) {
+        if (node.type == "document") {
+            return;
+        }
+
+        const nodeKind = node.nodeKind;
+        const nodeName = nodeKind == "document" ? "$" : fn.nodeName(node);
+        let nodeIndex = null;
+
+        if(nodeKind === "array") {
+            const childAsObject = child.toObject();
+            for(let i = 0; i < node.length; i++) {
+                if(_.isEqual(node[i].toObject(), childAsObject)) {
+                    nodeIndex = i;
+                    break;
+                }
+            }
+        }
+
+        path.push({
+            nodeName,
+            nodeKind,
+            nodeIndex,
+        });
+
+        const parentNode = fn.head(node.xpath(".."));
+        if (parentNode != null) {
+            this.buildMatchPath({ node: parentNode, child: node, path });
+        }
+
+        return path;
+    }
+
+    /**
+     * @private
+     */
+    matchPathCallback({ text, node, queries, start, matches, parsedQuery, dictionaryLookup }) {
+        const path = this.buildMatchPath({ node });
+
+        for (let i = 0; i < path.length; i++) {
+            if (path[i].nodeKind === "array") {
+                path[i + 1].nodeName += `[${path[i].nodeIndex}]`;
+            }
+        }
+
+        const fullPath = path.filter(p => p.nodeName != null).reverse().map(p => p.nodeName).join(".");
+        const pathDescription = dictionaryLookup({ path: fullPath })
+
+        const match = {
+            path: fullPath,
+            pathDescription,
+            node: node.toString(),
+            text,
+        };
+
+        if(parsedQuery.input != null && parsedQuery.input.text != null) {
+            match.queryText = parsedQuery.input.text;
+        }
+        const found = matches.find(m => 
+            m.path == match.path
+            && m.node == match.node
+            && m.text == match.text
+            && m.queryText == match.queryText
+            );
+
+        if(found == null) {
+            matches.push({ ...match });
+        }
+
+        return "continue";
+    }
+
+    generateMatches({ doc, query, parsedQuery, dictionaryLookup }) {
+        const matches = [];
+        const callback = (text, node, queries, start) => this.matchPathCallback({ text, node, queries, start, matches, parsedQuery, dictionaryLookup })
+        cts.walk(doc, query, callback);
+        return matches;
+    }
+}
+
 class SearchParser {
     constructor({ options = {}, queryString = null }) {
         this.options = options;
@@ -200,6 +288,8 @@ class SearchParser {
 
         this.typeConverter = new TypeConverter({ options });
         this.typeModules = {};
+
+        this.matcher = new PathMatcher({ options });
 
         if (queryString != null) {
             this.parse(queryString);
@@ -317,87 +407,6 @@ class SearchParser {
     /**
      * @private
      */
-    buildMatchPath({node, child = null, path = []}) {
-        if (node.type == "document") {
-            return;
-        }
-
-        const nodeKind = node.nodeKind;
-        const nodeName = nodeKind == "document" ? "$" : fn.nodeName(node);
-        let nodeIndex = null;
-
-        if(nodeKind === "array") {
-            const childAsObject = child.toObject();
-            for(let i = 0; i < node.length; i++) {
-                if(_.isEqual(node[i].toObject(), childAsObject)) {
-                    nodeIndex = i;
-                    break;
-                }
-            }
-        }
-
-        path.push({
-            nodeName,
-            nodeKind,
-            nodeIndex,
-        });
-
-        const parentNode = fn.head(node.xpath(".."));
-        if (parentNode != null) {
-            this.buildMatchPath({ node: parentNode, child: node, path });
-        }
-
-        return path;
-    }
-
-    /**
-     * @private
-     */
-    generateMatches({ doc, query, parsedQuery, dictionaryLookup }) {
-        const matches = [];
-        const callback = (text, node, queries, start) => {
-            const path = this.buildMatchPath({ node });
-    
-            for (let i = 0; i < path.length; i++) {
-                if (path[i].nodeKind === "array") {
-                    path[i + 1].nodeName += `[${path[i].nodeIndex}]`;
-                }
-            }
-    
-            const fullPath = path.filter(p => p.nodeName != null).reverse().map(p => p.nodeName).join(".");
-            const pathDescription = dictionaryLookup({ path: fullPath })
-    
-            const match = {
-                path: fullPath,
-                pathDescription,
-                node: node.toString(),
-                text,
-            };
-    
-            if(parsedQuery.input != null && parsedQuery.input.text != null) {
-                match.queryText = parsedQuery.input.text;
-            }
-            const found = matches.find(m => 
-                m.path == match.path
-                && m.node == match.node
-                && m.text == match.text
-                && m.queryText == match.queryText
-                );
-    
-            if(found == null) {
-                matches.push({ ...match });
-            }
-    
-            return "continue";
-        };
-    
-        cts.walk(doc, query, callback);
-        return matches;
-    }
-
-    /**
-     * @private
-     */
     doMatch({ parsedQuery, doc, dictionaryLookup }) {
         const doChildMatch = ({ parsedQuery, doc, abortOnMiss }) => {
             const matches = {
@@ -431,10 +440,15 @@ class SearchParser {
                 };
 
             case "CONSTRAINT":
+                const constraintConfig = this.constraintMap[parsedQuery.name];
+                return (constraintConfig != null) ?
+                    this.getConstraint({ constraintConfig })
+                        .generateMatches({ doc, parsedQuery, constraintConfig, dictionaryLookup }) :
+                    { matched: true, matches: [] };
     
             default:
                 let query = this.toCts({ parsedQuery, options });
-                let matches = this.generateMatches({ doc, query, parsedQuery, dictionaryLookup });
+                let matches = this.matcher.generateMatches({ doc, query, parsedQuery, dictionaryLookup });
                 return (matches != null && matches.length > 0) ? 
                     { matched: true, matches } : 
                     { matched: false, matches: [] };
@@ -496,36 +510,31 @@ class SearchParser {
     
     }
 
+    getConstraint({ constraintConfig }) {
+        const { type } = constraintConfig;
+        let ConstraintClass = this.typeModules[type] || (this.typeModules[type] = require(type));
+        return new ConstraintClass({ options: this.options, matcher: this.matcher, parser: this, typeConverter: this.typeConverter, constraintConfig });
+    }
+
     constraintToCts({ parsedQuery, options }) {
         const constraintConfig = this.constraintMap[parsedQuery.name];
-    
-        if (constraintConfig != null) {
-            const { type, faceted } = constraintConfig;
-            const evaluator = this.typeModules[type] || (this.typeModules[type] = require(type));
-            return evaluator.toCts({ parsedQuery, options, constraintConfig });
-        } else {
-            return cts.trueQuery();
-        }
+        return (constraintConfig != null) ?
+            this.getConstraint({ constraintConfig }).toCts({ parsedQuery, constraintConfig }) :
+            cts.trueQuery();
     }
 
     /**
      * @private
      */
     startFacet({ constraintConfig, query }) {
-        const { type, faceted } = constraintConfig;
-        const evaluator = this.typeModules[type] || (this.typeModules[type] = require(type));
-    
-        return evaluator.startFacet({ constraintConfig, query });
+        return this.getConstraint({ constraintConfig }).startFacet({ constraintConfig, query });
     }
 
     /**
      * @private
      */
     finishFacet({ startValue, constraintConfig, query }) {
-        const { type, faceted } = constraintConfig;
-        const evaluator = this.typeModules[type] || (this.typeModules[type] = require(type));
-    
-        return evaluator.finishFacet({ startValue, constraintConfig, query });
+        return this.getConstraint({ constraintConfig }).finishFacet({ startValue, constraintConfig, query });
     }
 
     /**

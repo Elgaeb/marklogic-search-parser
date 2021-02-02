@@ -1,42 +1,26 @@
-const { makeCtsQuery, makeReference } = require("typeConverters");
+const { Constraint } = require('../Constraint');
 
-function toCts({ parsedQuery, options, constraintConfig = {} }) {
-    const ctsQuery = cts.orQuery([
-        makeCtsQuery({ parsedQuery, constraintConfig, options, valueOptions: constraintConfig.value }),
-        makeCtsQuery({ parsedQuery, constraintConfig, options, valueOptions: constraintConfig.code }),
-    ]);
-
-    return constraintConfig.scope != null ? cts.jsonPropertyScopeQuery(constraintConfig.scope, ctsQuery) : ctsQuery;
-}
-
-function startFacet({ constraintConfig, query }) {
-
-    const facetType = constraintConfig.facetType || "value";
-    const options = constraintConfig[facetType];
-    const reference = makeReference({ valueOptions: options });
-    const additionalOptions = constraintConfig.facetOptions || [];
-    return cts.values(reference, null, [].concat([ "concurrent", ...additionalOptions]), query);
-}
-
-function finishFacet({ startValue, constraintConfig, query }) {
-    const out = [];
-
-    for(let value of startValue) {
-        out.push({ 
-            name: value.toString(),
-            count: cts.frequency(value)
-         });
+class CodeValueConstraint extends Constraint {
+    constructor({ options, matcher, parser, typeConverter, constraintConfig }) {
+        super({ options, matcher, parser, typeConverter, constraintConfig });
     }
 
-    return out;
-    // return {
-    //     constraintConfig,
-    //     out
-    // };
+    toCts({ parsedQuery }) {
+        const ctsQuery = cts.orQuery([
+            this.typeConverter.makeCtsQuery({ parsedQuery, constraintConfig: this.constraintConfig, valueOptions: this.constraintConfig.value }),
+            this.typeConverter.makeCtsQuery({ parsedQuery, constraintConfig: this.constraintConfig, valueOptions: this.constraintConfig.code }),
+        ]);
+    
+        return this.constraintConfig.scope != null ? cts.jsonPropertyScopeQuery(this.constraintConfig.scope, ctsQuery) : ctsQuery;
+    }
+
+    startFacet({ query }) {
+        const facetType = this.constraintConfig.facetType || "value";
+        const options = this.constraintConfig[facetType];
+        const reference = this.typeConverter.makeReference({ valueOptions: options });
+        const additionalOptions = this.constraintConfig.facetOptions || [];
+        return cts.values(reference, null, [].concat([ "concurrent", ...additionalOptions]), query);
+    }
 }
 
-module.exports = {
-    toCts,
-    startFacet,
-    finishFacet
-};
+module.exports = CodeValueConstraint;

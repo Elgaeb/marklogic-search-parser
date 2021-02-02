@@ -1,32 +1,25 @@
-const { makeCtsQuery, makeReference } = require("typeConverters");
+const { Constraint } = require('../Constraint');
 
-function toCts({ parsedQuery, options, constraintConfig = {} }) {
-    const ctsQuery = makeCtsQuery({ parsedQuery, constraintConfig, options, valueOptions: constraintConfig.value });
-    return constraintConfig.scope != null ? cts.jsonPropertyScopeQuery(constraintConfig.scope, ctsQuery) : ctsQuery;
-}
-
-function startFacet({ constraintConfig, query }) {
-    const valueOptions = constraintConfig.value;
-    const reference = makeReference({ valueOptions });
-    const additionalOptions = constraintConfig.facetOptions || [];
-    return cts.values(reference, null, [].concat([ "concurrent", ...additionalOptions]), query);
-}
-
-function finishFacet({ startValue, constraintConfig, query }) {
-    const out = [];
-
-    for(let value of startValue) {
-        out.push({ 
-            name: value.toString(),
-            count: cts.frequency(value)
-         });
+class ValueConstraint extends Constraint {
+    constructor({ options, matcher, parser, typeConverter, constraintConfig }) {
+        super({ options, matcher, parser, typeConverter, constraintConfig });
     }
 
-    return out;
+    toCts({ parsedQuery }) {
+        const ctsQuery = this.typeConverter.makeCtsQuery({ 
+            parsedQuery, 
+            constraintConfig: this.constraintConfig, 
+            valueOptions: this.constraintConfig.value 
+        });
+        return this.constraintConfig.scope != null ? cts.jsonPropertyScopeQuery(this.constraintConfig.scope, ctsQuery) : ctsQuery;
+    }
+
+    startFacet({ query }) {
+        const valueOptions = this.constraintConfig.value;
+        const reference = this.typeConverter.makeReference({ valueOptions });
+        const additionalOptions = this.constraintConfig.facetOptions || [];
+        return cts.values(reference, null, [].concat([ "concurrent", ...additionalOptions]), query);
+    }
 }
 
-module.exports = {
-    toCts,
-    startFacet,
-    finishFacet
-};
+module.exports = ValueConstraint;

@@ -1,36 +1,25 @@
-const { makeCtsQuery, makeReference } = require("typeConverters");
+const { Constraint } = require('../Constraint');
 
-function toCts({ parsedQuery, options, constraintConfig = {} }) {
-    const collectionName = parsedQuery.value.value;
-
-    const desiredValue = (!constraintConfig.wildcarded) ?
-        [ "" + parsedQuery.value.value ] :
-        cts.valueMatch(cts.collectionReference([]), "" + parsedQuery.value.value);
-
-    return cts.collectionQuery(desiredValue);
-}
-
-function startFacet({ constraintConfig, query }) {
-    const reference = cts.collectionReference([]);
-    const additionalOptions = constraintConfig.facetOptions || [];
-    return cts.values(reference, null, [].concat([ "concurrent", ...additionalOptions]), query);
-}
-
-function finishFacet({ startValue, constraintConfig, query }) {
-    const out = [];
-
-    for(let value of startValue) {
-        out.push({ 
-            name: value.toString(),
-            count: cts.frequency(value)
-         });
+class CollectionConstraint extends Constraint {
+    constructor({ options, matcher, parser, typeConverter, constraintConfig }) {
+        super({ options, matcher, parser, typeConverter, constraintConfig });
     }
 
-    return out;
+    toCts({ parsedQuery }) {
+        const collectionName = "" + parsedQuery.value.value;
+
+        const desiredValue = (!this.constraintConfig.wildcarded) ?
+            [ collectionName ] :
+            cts.valueMatch(cts.collectionReference([]), collectionName);
+    
+        return cts.collectionQuery(desiredValue);
+    }
+
+    startFacet({ query }) {
+        const reference = cts.collectionReference([]); 
+        const additionalOptions = this.constraintConfig.facetOptions || [];
+        return cts.values(reference, null, [].concat([ "concurrent", ...additionalOptions]), query);
+    }
 }
 
-module.exports = {
-    toCts,
-    startFacet,
-    finishFacet
-};
+module.exports = CollectionConstraint;
