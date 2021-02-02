@@ -30,19 +30,15 @@ function toSortOrder({ order, direction }) {
 
 function makeSortOrder({ options, orderName, reverse = false }) {
     let sortOrderName = orderName == null ? options.defaultSortOrder : orderName;
-    let direction = order.direction == "ascending" ? "ascending" : "descending";
-    if(reverse) {
-        direction = direction == "ascending" ? "descending" : "ascending";
-    }
 
     if(sortOrderName == null) {
-        return cts.scoreOrder([ direction ]);
+        return cts.scoreOrder([ reverse ? "ascending" : "descending" ]);
     }
 
     let orderOptions = options.sortOrder[sortOrderName];
 
     if(orderOptions == null) {
-        return cts.scoreOrder([ direction ]);
+        return cts.scoreOrder([ reverse ? "ascending" : "descending" ]);
     }
 
     return orderOptions.map(order => toSortOrder({ order, reverse }));

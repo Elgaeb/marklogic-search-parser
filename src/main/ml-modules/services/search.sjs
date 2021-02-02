@@ -12,9 +12,13 @@ function asNumber({ value, defaultValue }) {
 }
 
 function opt({ propertyName, params, defaultValue }) {
-    return params == null || params[propertyName] == null ?
-        defaultValue :
-        params[propertyName];
+    if(params != null && params[propertyName] != null) {
+        return params[propertyName];
+    } else if (options[propertyName] != null) {
+        return options[propertyName];
+    } else {
+        return defaultValue;
+    }
 }
 
 function get(context, params) {
@@ -49,7 +53,7 @@ function get(context, params) {
     }
 
     const searchOptions = [].concat(...[ "faceted", makeSortOrder({ options, orderName, reverse }) ]);
-    const results = fn.subsequence(
+    const searchResults = fn.subsequence(
         cts.search(cts.andQuery(ctsQueries), searchOptions),
         start,
         pageLength
@@ -62,7 +66,7 @@ function get(context, params) {
         });
     }
 
-    const resultsArr = results.toArray().map(doc => {
+    const resultsArr = !returnResults ? [] : searchResults.toArray().map(doc => {
         const docResult = {
             content: doc
         };

@@ -1,6 +1,13 @@
 const options = {
     constraints: [
         {
+            name: "Collection",
+            type: "collection",
+            faceted: true,
+            wildcarded: true,
+            "facetOptions": ["frequency-order", "descending", "fragment-frequency", "limit=20"]
+        },
+        {
             name: "BirthDate",
             type: "value",
             faceted: false,
@@ -53,7 +60,7 @@ const options = {
     returnResults: true,
     returnMatches: true,
     returnFacets: true,
-    returnOptions: true,
+    returnOptions: false,
     defaultSortOrder: "birthDate",
     sortOrder: {
         birthDate: [
