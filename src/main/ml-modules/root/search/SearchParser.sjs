@@ -250,6 +250,7 @@ class PathMatcher {
         const pathDescription = dictionaryLookup({ path: fullPath })
 
         const match = {
+            type: 'document',
             path: fullPath,
             pathDescription,
             node: node.toString(),
@@ -572,5 +573,6 @@ class SearchParser {
 
 module.exports = {
     SearchParser,
-    TypeConverter
+    TypeConverter,
+    PathMatcher
 };
