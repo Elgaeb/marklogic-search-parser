@@ -1,8 +1,8 @@
 const { Constraint } = require('../Constraint');
 
 class ValueConstraint extends Constraint {
-    constructor({ options, matcher, parser, typeConverter, constraintConfig }) {
-        super({ options, matcher, parser, typeConverter, constraintConfig });
+    constructor({ options, matcher, parser, typeConverter, constraintConfig, dataDictionary }) {
+        super({ options, matcher, parser, typeConverter, constraintConfig, dataDictionary });
     }
 
     toCts({ parsedQuery }) {

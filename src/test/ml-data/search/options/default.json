@@ -1,0 +1,31 @@
+{
+  "constraints": [
+    {
+      "name": "Collection",
+      "type": "constraints/collection",
+      "faceted": true,
+      "wildcarded": true,
+      "facetOptions": [
+        "frequency-order",
+        "fragment-frequency",
+        "descending",
+        "limit=20"
+      ]
+    }
+  ],
+  "returnQuery": true,
+  "returnCtsQuery": false,
+  "returnResults": true,
+  "returnMatches": true,
+  "returnFacets": true,
+  "returnOptions": true,
+  "defaultSortOrder": "score",
+  "sortOrder": {
+    "score": [
+      {
+        "type": "score",
+        "direction": "descending"
+      }
+    ]
+  }
+}

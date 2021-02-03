@@ -1,8 +1,8 @@
 const { Constraint } = require('../Constraint');
 
 class CollectionConstraint extends Constraint {
-    constructor({ options, matcher, parser, typeConverter, constraintConfig }) {
-        super({ options, matcher, parser, typeConverter, constraintConfig });
+    constructor({ options, matcher, parser, typeConverter, constraintConfig, dataDictionary }) {
+        super({ options, matcher, parser, typeConverter, constraintConfig, dataDictionary });
     }
 
     toCts({ parsedQuery }) {
@@ -21,7 +21,7 @@ class CollectionConstraint extends Constraint {
         return cts.values(reference, null, [].concat([ "concurrent", ...additionalOptions]), query);
     }
 
-    generateMatches({ doc, parsedQuery, constraintConfig, dictionaryLookup }) {
+    generateMatches({ doc, parsedQuery, constraintConfig }) {
         const collectionName = "" + parsedQuery.value.value;
         const documentUri = fn.baseUri(doc);
         const desiredCollections = (!this.constraintConfig.wildcarded) ?

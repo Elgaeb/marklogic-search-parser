@@ -1,6 +1,8 @@
 const nearley = require("nearley");
 const grammar = require("grammar");
 
+const { DataDictionary, DocumentDataDictionary } = require('DataDictionary.sjs');
+
 const { DateTime } = require("/search/luxon");
 const _ = require("underscore");
 
@@ -194,8 +196,9 @@ class TypeConverter {
 }
 
 class PathMatcher {
-    constructor({ options }) {
+    constructor({ options, dataDictionary }) {
         this.options = options;
+        this.dataDictionary = dataDictionary;
     }
     
     /**
@@ -237,7 +240,7 @@ class PathMatcher {
     /**
      * @private
      */
-    matchPathCallback({ text, node, queries, start, matches, parsedQuery, dictionaryLookup }) {
+    matchPathCallback({ text, node, queries, start, matches, parsedQuery }) {
         const path = this.buildMatchPath({ node });
 
         for (let i = 0; i < path.length; i++) {
@@ -247,7 +250,7 @@ class PathMatcher {
         }
 
         const fullPath = path.filter(p => p.nodeName != null).reverse().map(p => p.nodeName).join(".");
-        const pathDescription = dictionaryLookup({ path: fullPath })
+        const pathDescription = this.dataDictionary.lookup({ path: fullPath })
 
         const match = {
             type: 'document',
@@ -274,27 +277,40 @@ class PathMatcher {
         return "continue";
     }
 
-    generateMatches({ doc, query, parsedQuery, dictionaryLookup }) {
+    generateMatches({ doc, query, parsedQuery }) {
         const matches = [];
-        const callback = (text, node, queries, start) => this.matchPathCallback({ text, node, queries, start, matches, parsedQuery, dictionaryLookup })
+        const callback = (text, node, queries, start) => this.matchPathCallback({ text, node, queries, start, matches, parsedQuery })
         cts.walk(doc, query, callback);
         return matches;
     }
 }
 
 class SearchParser {
-    constructor({ options = {}, queryString = null }) {
+    constructor({ options = {}, queryString = null, dataDictionary = null }) {
         this.options = options;
         this.constraintMap = this.generateConstraintMap({ constraints: options.constraints || [] });
 
         this.typeConverter = new TypeConverter({ options });
         this.typeModules = {};
 
-        this.matcher = new PathMatcher({ options });
+        this.dataDictionary = dataDictionary || this.generateDataDictionary();
+
+        this.matcher = new PathMatcher({ options, dataDictionary: this.dataDictionary });
+
 
         if (queryString != null) {
             this.parse(queryString);
         }
+    }
+
+    generateDataDictionary() {
+        if(this.options.dataDictionary != null) {
+            if(this.options.dataDictionary.document != null && fn.docAvailable(this.options.dataDictionary.document)) {
+                return new DocumentDataDictionary({ uri: this.options.dataDictionary.document });
+            }
+        }
+
+        return new DataDictionary();
     }
 
     /**
@@ -408,7 +424,7 @@ class SearchParser {
     /**
      * @private
      */
-    doMatch({ parsedQuery, doc, dictionaryLookup }) {
+    doMatch({ parsedQuery, doc }) {
         const doChildMatch = ({ parsedQuery, doc, abortOnMiss }) => {
             const matches = {
                 matched: true,
@@ -416,7 +432,7 @@ class SearchParser {
             };
     
             for(let cq of parsedQuery.children) {
-                const childMatch = this.doMatch({ parsedQuery: cq, doc, dictionaryLookup });
+                const childMatch = this.doMatch({ parsedQuery: cq, doc });
                 if(childMatch.matched) {
                     matches.matches = [].concat(...[ matches.matches, childMatch.matches ]);
                 } else  if(abortOnMiss) {
@@ -442,14 +458,15 @@ class SearchParser {
 
             case "CONSTRAINT":
                 const constraintConfig = this.constraintMap[parsedQuery.name];
+                // throw JSON.stringify(parsedQuery);
                 return (constraintConfig != null) ?
-                    this.getConstraint({ constraintConfig })
-                        .generateMatches({ doc, parsedQuery, constraintConfig, dictionaryLookup }) :
+                    this.getConstraint({ constraintConfig, dataDictionary: this.dataDictionary })
+                        .generateMatches({ doc, parsedQuery, constraintConfig }) :
                     { matched: true, matches: [] };
     
             default:
                 let query = this.toCts({ parsedQuery, options });
-                let matches = this.matcher.generateMatches({ doc, query, parsedQuery, dictionaryLookup });
+                let matches = this.matcher.generateMatches({ doc, query, parsedQuery });
                 return (matches != null && matches.length > 0) ? 
                     { matched: true, matches } : 
                     { matched: false, matches: [] };
@@ -459,8 +476,8 @@ class SearchParser {
     /**
      * @public
      */
-    match({ parsedQuery, doc, dictionaryLookup }) {
-        return this.doMatch({ parsedQuery, doc, dictionaryLookup }).matches;
+    match({ parsedQuery, doc }) {
+        return this.doMatch({ parsedQuery, doc }).matches;
     }
 
     /**
@@ -511,10 +528,10 @@ class SearchParser {
     
     }
 
-    getConstraint({ constraintConfig }) {
+    getConstraint({ constraintConfig, dataDictionary }) {
         const { type } = constraintConfig;
         let ConstraintClass = this.typeModules[type] || (this.typeModules[type] = require(type));
-        return new ConstraintClass({ options: this.options, matcher: this.matcher, parser: this, typeConverter: this.typeConverter, constraintConfig });
+        return new ConstraintClass({ options: this.options, matcher: this.matcher, parser: this, typeConverter: this.typeConverter, constraintConfig, dataDictionary });
     }
 
     constraintToCts({ parsedQuery, options }) {

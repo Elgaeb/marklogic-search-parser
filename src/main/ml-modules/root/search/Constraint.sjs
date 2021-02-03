@@ -3,12 +3,13 @@ class Constraint {
     /**
      * @param options the search options in use 
      */
-    constructor({ options, matcher, parser, typeConverter, constraintConfig }) {
+    constructor({ options, matcher, parser, typeConverter, constraintConfig, dataDictionary }) {
         this.options = options;
         this.matcher = matcher;
         this.parser = parser;
         this.typeConverter = typeConverter;
         this.constraintConfig = constraintConfig;
+        this.dataDictionary = dataDictionary;
     }
 
     /**
@@ -45,9 +46,9 @@ class Constraint {
         return out;
     }
 
-    generateMatches({ doc, parsedQuery, constraintConfig, dictionaryLookup }) {
+    generateMatches({ doc, parsedQuery, constraintConfig }) {
         let query = this.toCts({ parsedQuery, constraintConfig });
-        let matches = this.matcher.generateMatches({ doc, query, parsedQuery, dictionaryLookup });
+        let matches = this.matcher.generateMatches({ doc, query, parsedQuery });
         return (matches != null && matches.length > 0) ? 
             { matched: true, matches } : 
             { matched: false, matches: [] };

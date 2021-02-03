@@ -2,8 +2,6 @@ const spec = require('/test/spec');
 const expect = require("/thirdparty/expect");
 
 const { GET } = require('/marklogic.rest.resource/search/assets/resource.sjs');
-const options = require("/search-options");
-
 
 const context = {};
 const params = {
@@ -12,7 +10,8 @@ const params = {
     // collection: "",
     // directory: "",
     start: 1,
-    pageLength: 5
+    pageLength: 5,
+    options: 'test'
 }
 
 GET(context, params);

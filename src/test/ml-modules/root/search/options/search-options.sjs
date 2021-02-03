@@ -55,6 +55,9 @@ const options = {
             value: { type: "jsonProperty", value: "favoriteQuote", useWordQuery: true },
         }
     ],
+    dataDictionary: {
+        document: ""
+    },
     returnQuery: true,
     returnCtsQuery: false,
     returnResults: true,
