@@ -4,36 +4,36 @@
         "name": "Collection",
         "type": "constraints/collection",
         "faceted": true,
-        "wildcarded": true,
+        "wildcarded": false,
         "facetOptions": ["frequency-order", "descending", "fragment-frequency", "limit=20"]
       },
       {
         "name": "BirthDate",
-        "type": "constraints/value",
+        "type": "constraints/values",
         "faceted": false,
         "wildcarded": true,
         "facetOptions": ["item-order", "descending", "fragment-frequency", "limit=3"],
-        "value": { "type": "jsonPropertyIndex", "value": "birthDate" }
+        "value": { "type": "jsonPropertyIndex", "value": "birthDate", "facet": true }
       },
       {
         "name": "Updated",
-        "type": "constraints/value",
+        "type": "constraints/values",
         "faceted": false,
         "wildcarded": false,
         "facetOptions": ["item-order", "descending", "fragment-frequency", "limit=3"],
-        "value": { "type": "jsonPropertyIndex", "value": "updatedDateTime" }
+        "value": { "type": "jsonPropertyIndex", "value": "updatedDateTime", "facet": true }
       },
       {
         "name": "FirstName",
-        "type": "constraints/value",
+        "type": "constraints/values",
         "faceted": false,
         "wildcarded": true,
         "facetOptions": ["item-order", "ascending", "fragment-frequency", "limit=3"],
-        "value": { "type": "pathIndex", "value": "//Name/firstName" }
+        "value": { "type": "pathIndex", "value": "//Name/firstName", "facet": true }
       },
       {
         "name": "Race",
-        "type": "constraints/value",
+        "type": "constraints/values",
         "faceted": true,
         "wildcarded": false,
         "facetOptions": ["frequency-order", "descending", "fragment-frequency", "limit=10"],
@@ -41,16 +41,18 @@
       },
       {
         "name": "Gender",
-        "type": "constraints/code-value",
+        "type": "constraints/values",
         "faceted": true,
         "wildcarded": false,
         "scope": "Gender",
-        "code": { "type": "jsonPropertyIndex", "value": "genderCode" },
-        "value": { "type": "jsonPropertyIndex", "value": "gender" }
+        "value": [
+          { "type": "jsonPropertyIndex", "value": "genderCode" },
+          { "type": "jsonPropertyIndex", "value": "gender", "facet": true }
+        ]
       },
       {
         "name": "Quote",
-        "type": "constraints/value",
+        "type": "constraints/values",
         "wildcarded": true,
         "value": { "type": "jsonProperty", "value": "favoriteQuote", "useWordQuery": true }
       }
@@ -64,6 +66,7 @@
     "returnMatches": true,
     "returnFacets": true,
     "returnOptions": true,
+    "returnMetrics": true,
     "defaultSortOrder": "birthDate",
     "sortOrder": {
       "birthDate": [

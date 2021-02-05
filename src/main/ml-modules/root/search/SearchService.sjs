@@ -55,6 +55,7 @@ class SearchService {
         const returnMatches = this.opt({ propertyName: 'returnMatches', params, defaultValue: true });
         const returnFacets = this.opt({ propertyName: 'returnFacets', params, defaultValue: true });
         const returnOptions = this.opt({ propertyName: 'returnQuery', params, defaultValue: false });
+        const returnMetrics = this.opt({ propertyName: 'returnMetrics', params, defaultValue: false });
 
         return {
             qtext,
@@ -70,7 +71,8 @@ class SearchService {
             returnResults,
             returnMatches,
             returnFacets,
-            returnOptions
+            returnOptions,
+            returnMetrics
         };
     }
 
@@ -88,14 +90,17 @@ class SearchService {
         returnResults,
         returnMatches,
         returnFacets,
-        returnOptions
+        returnOptions,
+        returnMetrics
     }) {
         const serviceStart = DateTime.fromJSDate(new Date());
 
         const metrics = {};
-        const results = {
-            metrics
-        };
+        const results = {};
+
+        if(!!returnMetrics) {
+            results.metrics = metrics;
+        }
 
         const { parserInstantiationDuration, parser } = time({
             metricsProperty: 'parserInstantiationDuration',
@@ -176,7 +181,9 @@ class SearchService {
                                 }
                             });
 
-                            docResult.metrics = { matchDuration };
+                            if(!!returnMetrics) {
+                                docResult.metrics = { matchDuration };
+                            }
                             docResult.matches = matches;
                         }
         

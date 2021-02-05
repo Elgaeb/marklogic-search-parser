@@ -19,6 +19,7 @@
   "returnMatches": true,
   "returnFacets": true,
   "returnOptions": true,
+  "returnMetrics": true,
   "defaultSortOrder": "score",
   "sortOrder": {
     "score": [
