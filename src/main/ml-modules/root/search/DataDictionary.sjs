@@ -11,7 +11,8 @@ class DocumentDataDictionary extends DataDictionary {
     }
 
     lookup({ path }) {
-        return this.dictionary[path].description;
+        const entry = this.dictionary[path];
+        return entry != null ? this.dictionary[path].description : undefined;
     }
 }
 

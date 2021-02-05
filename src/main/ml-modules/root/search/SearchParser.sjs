@@ -379,10 +379,10 @@ class SearchParser {
     /**
      * @private
      */
-    toCts({ parsedQuery, options = {} }) {
+    toCts({ parsedQuery }) {
         const collectChildren = (parsedQuery) => {
             if (parsedQuery.children != null) {
-                return parsedQuery.children.map(childQuery => this.toCts({ parsedQuery: childQuery, options }));
+                return parsedQuery.children.map(childQuery => this.toCts({ parsedQuery: childQuery }));
             }
             else {
                 return [];
@@ -404,7 +404,7 @@ class SearchParser {
                 return cts.trueQuery();
     
             case "CONSTRAINT":
-                return this.constraintToCts({ parsedQuery, options });
+                return this.constraintToCts({ parsedQuery });
     
             default:
                 break;
@@ -458,14 +458,14 @@ class SearchParser {
 
             case "CONSTRAINT":
                 const constraintConfig = this.constraintMap[parsedQuery.name];
-                // throw JSON.stringify(parsedQuery);
-                return (constraintConfig != null) ?
-                    this.getConstraint({ constraintConfig, dataDictionary: this.dataDictionary })
-                        .generateMatches({ doc, parsedQuery, constraintConfig }) :
-                    { matched: true, matches: [] };
+                if(constraintConfig != null) {
+                    const constraint = this.getConstraint({ constraintConfig, dataDictionary: this.dataDictionary });
+                    return constraint.generateMatches({ doc, parsedQuery, constraintConfig });
+                }
+                return { matched: true, matches: [] };
     
             default:
-                let query = this.toCts({ parsedQuery, options });
+                let query = this.toCts({ parsedQuery });
                 let matches = this.matcher.generateMatches({ doc, query, parsedQuery });
                 return (matches != null && matches.length > 0) ? 
                     { matched: true, matches } : 
@@ -534,7 +534,7 @@ class SearchParser {
         return new ConstraintClass({ options: this.options, matcher: this.matcher, parser: this, typeConverter: this.typeConverter, constraintConfig, dataDictionary });
     }
 
-    constraintToCts({ parsedQuery, options }) {
+    constraintToCts({ parsedQuery }) {
         const constraintConfig = this.constraintMap[parsedQuery.name];
         return (constraintConfig != null) ?
             this.getConstraint({ constraintConfig }).toCts({ parsedQuery, constraintConfig }) :
