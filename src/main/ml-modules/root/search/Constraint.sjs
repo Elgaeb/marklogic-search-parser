@@ -24,7 +24,7 @@ class Constraint {
     /**
      * @param query the cts query used to perform the initial search 
      */
-    startFacet({  query }) {
+    startFacet({ query }) {
         return Sequence.from([]);
     }
 
@@ -35,22 +35,32 @@ class Constraint {
      */
     finishFacet({ startValue, query }) {
         const out = [];
-    
-        for(let value of startValue) {
-            out.push({ 
-                name: value.toString(),
-                count: cts.frequency(value)
-             });
+        const outHash = {};
+
+        for (let value of startValue) {
+            const name = value.toString();
+            const existing = outHash[name];
+
+            if (existing != null) {
+                existing.count += cts.frequency(value);
+            } else {
+                const newValue = {
+                    name: name,
+                    count: cts.frequency(value)
+                };
+                out.push(newValue);
+                outHash[name] = newValue;
+            }
         }
-    
+
         return out;
     }
 
     generateMatches({ doc, parsedQuery, constraintConfig }) {
         let query = this.toCts({ parsedQuery, constraintConfig });
         let matches = this.matcher.generateMatches({ doc, query, parsedQuery });
-        return (matches != null && matches.length > 0) ? 
-            { matched: true, matches } : 
+        return (matches != null && matches.length > 0) ?
+            { matched: true, matches } :
             { matched: false, matches: [] };
     }
 
