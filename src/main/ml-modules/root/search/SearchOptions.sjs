@@ -4,12 +4,11 @@ const DEFAULT_SEARCH_OPTIONS = {
             "name": "Collection",
             "type": "constraints/collection",
             "faceted": true,
-            "wildcarded": true,
+            "wildcarded": false,
             "facetOptions": [
                 "frequency-order",
                 "fragment-frequency",
-                "descending",
-                "limit=20"
+                "descending"
             ]
         }
     ],

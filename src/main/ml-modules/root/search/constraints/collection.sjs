@@ -10,7 +10,11 @@ class CollectionConstraint extends Constraint {
 
         const desiredValue = (!this.constraintConfig.wildcarded) ?
             [ collectionName ] :
-            cts.valueMatch(cts.collectionReference([]), collectionName);
+            cts.valueMatch(
+                cts.collectionReference([]),
+                collectionName,
+                []
+            );
     
         return cts.collectionQuery(desiredValue);
     }
@@ -23,10 +27,14 @@ class CollectionConstraint extends Constraint {
 
     generateMatches({ doc, parsedQuery, constraintConfig }) {
         const collectionName = "" + parsedQuery.value.value;
-        const documentUri = fn.baseUri(doc);
         const desiredCollections = (!this.constraintConfig.wildcarded) ?
             [ collectionName ] :
-            cts.valueMatch(cts.collectionReference([]), collectionName).toArray().map(v => v.toString());
+            cts.valueMatch(
+                cts.collectionReference([]),
+                collectionName,
+                [],
+                cts.documentQuery([ fn.baseUri(doc) ])
+            ).toArray().map(v => v.toString());
 
         const documentCollections = xdmp.documentGetCollections(fn.baseUri(doc));
         const matches = desiredCollections
@@ -34,7 +42,7 @@ class CollectionConstraint extends Constraint {
             .map(collection => ({
                 type: 'collection',
                 collection,
-                queryText: parsedQuery.input.text,
+                queryText: parsedQuery.input.text
             }));
         const matched = matches.length > 0;
 
