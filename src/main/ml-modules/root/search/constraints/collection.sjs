@@ -6,7 +6,7 @@ class CollectionConstraint extends Constraint {
     }
 
     toCts({ parsedQuery }) {
-        const collectionName = "" + parsedQuery.value.value;
+        const collectionName = `${this.constraintConfig.prefix == null ? "" : this.constraintConfig.prefix}${parsedQuery.value.value}`;
 
         const desiredValue = (!this.constraintConfig.wildcarded) ?
             [ collectionName ] :
@@ -25,8 +25,38 @@ class CollectionConstraint extends Constraint {
         return cts.values(reference, null, [].concat([ "concurrent", ...additionalOptions]), query);
     }
 
+    finishFacet({ startValue, query }) {
+        const out = [];
+        const outHash = {};
+        const prefix = this.constraintConfig.prefix == null ? "" : this.constraintConfig.prefix;
+
+        for (let value of startValue) {
+            const name = value.toString();
+            if(name.startsWith(prefix)) {
+                const existing = outHash[name];
+
+                if (existing != null) {
+                    existing.count += cts.frequency(value);
+                } else {
+                    const newValue = {
+                        name: name,
+                        count: cts.frequency(value)
+                    };
+                    out.push(newValue);
+                    outHash[name] = newValue;
+                }
+            }
+        }
+
+        return prefix == "" ? out : out.map(value => ({
+            name: value.name.substr(prefix.length),
+            count: value.count
+        }));
+    }
+
+
     generateMatches({ doc, parsedQuery, constraintConfig }) {
-        const collectionName = "" + parsedQuery.value.value;
+        const collectionName = `${this.constraintConfig.prefix == null ? "" : this.constraintConfig.prefix}${parsedQuery.value.value}`;
         const desiredCollections = (!this.constraintConfig.wildcarded) ?
             [ collectionName ] :
             cts.valueMatch(
