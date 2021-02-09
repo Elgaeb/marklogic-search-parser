@@ -29,6 +29,8 @@ class TypeConverter {
                 return cts.pathReference(valueOptions.value, options);
             case "jsonPropertyIndex":
                 return cts.jsonPropertyReference(valueOptions.value, options);
+            case "fieldIndex":
+                return cts.fieldReference(valueOptions.value, options);
             default:
                 return null;
         }
