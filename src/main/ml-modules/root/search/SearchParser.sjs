@@ -252,16 +252,16 @@ class PathMatcher {
         const fullPath = path.filter(p => p.nodeName != null).reverse().map(p => p.nodeName).join(".");
         const pathDescription = this.dataDictionary.lookup({ path: fullPath })
 
-        const match = {
-            type: 'document',
-            path: fullPath,
-            pathDescription,
-            node: node.toString(),
-            text,
-        };
+        const match = {};
+
+        match['type'] = 'document';
+        match['path'] = fullPath;
+        match['path-description'] = pathDescription;
+        match['match-text'] = node.toString();
+        match['matched-text'] = text;
 
         if(parsedQuery.input != null && parsedQuery.input.text != null) {
-            match.queryText = parsedQuery.input.text;
+            match['query-text'] = parsedQuery.input.text;
         }
         const found = matches.find(m => 
             m.path == match.path

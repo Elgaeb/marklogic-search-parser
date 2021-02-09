@@ -54,7 +54,7 @@ class SearchService {
         const returnResults = this.opt({ propertyName: 'returnResults', params, defaultValue: true });
         const returnMatches = this.opt({ propertyName: 'returnMatches', params, defaultValue: true });
         const returnFacets = this.opt({ propertyName: 'returnFacets', params, defaultValue: true });
-        const returnOptions = this.opt({ propertyName: 'returnQuery', params, defaultValue: false });
+        const returnOptions = this.opt({ propertyName: 'returnOptions', params, defaultValue: false });
         const returnMetrics = this.opt({ propertyName: 'returnMetrics', params, defaultValue: false });
 
         return {
@@ -166,10 +166,18 @@ class SearchService {
             timedFunction: () => {
                 const resultsArr = [];
                 if(returnResults) {
+                    let index = 0;
                     for(let doc of searchResults) {
+                        index++;
                         const docResult = {
-                            content: doc,
-                            uri: fn.baseUri(doc)
+                            index,
+                            uri: fn.baseUri(doc),
+                            score: cts.score(doc),
+                            confidence: cts.confidence(doc),
+                            fitness: cts.fitness(doc),
+                            extracted: {
+                                content: [ doc ]
+                            }
                         };
             
                         if (returnMatches) {
@@ -198,7 +206,7 @@ class SearchService {
 
         results.total = cts.estimate(cts.andQuery(ctsQueries));
         results.start = start;
-        results.pageLength = pageLength;
+        results['page-length'] = pageLength;
         results.count = resultsArr.length;
 
         if (returnQuery) {

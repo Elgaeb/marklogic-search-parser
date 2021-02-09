@@ -40,9 +40,9 @@ class CollectionConstraint extends Constraint {
         const matches = desiredCollections
             .filter(collection => documentCollections.includes(collection))
             .map(collection => ({
-                type: 'collection',
+                "type": 'collection',
                 collection,
-                queryText: parsedQuery.input.text
+                "query-text": parsedQuery.input.text
             }));
         const matched = matches.length > 0;
 
