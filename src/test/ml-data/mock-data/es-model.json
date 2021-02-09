@@ -1,0 +1,27 @@
+{
+    "envelope": {
+        "instance": {
+            "Person": {
+                "id": 12345,
+                "names": [
+                    {
+                        "Name": {
+                            "firstName": [
+                                "Wallaby",
+                                "Kangaroo"
+                            ],
+                            "lastName": "Marsupial"
+                        }
+                    },
+                    {
+                        "Name": {
+                            "firstName": "Porcupine",
+                            "lastName": "St. Hamster"
+                        }
+                    }
+                ]
+            }
+        }
+    }
+
+}

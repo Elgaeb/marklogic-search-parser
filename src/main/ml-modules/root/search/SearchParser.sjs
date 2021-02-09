@@ -200,10 +200,7 @@ class PathMatcher {
         this.options = options;
         this.dataDictionary = dataDictionary;
     }
-    
-    /**
-     * @private
-     */
+
     buildMatchPath({node, child = null, path = []}) {
         if (node.type == "document") {
             return;
@@ -211,7 +208,7 @@ class PathMatcher {
 
         const nodeKind = node.nodeKind;
         const nodeName = nodeKind == "document" ? "$" : fn.nodeName(node);
-        let nodeIndex = null;
+        let nodeIndex = undefined;
 
         if(nodeKind === "array") {
             const childAsObject = child.toObject();
@@ -241,21 +238,36 @@ class PathMatcher {
      * @private
      */
     matchPathCallback({ text, node, queries, start, matches, parsedQuery }) {
-        const path = this.buildMatchPath({ node });
+        const path = this.buildMatchPath({ node }).reverse();
 
-        for (let i = 0; i < path.length; i++) {
-            if (path[i].nodeKind === "array") {
-                path[i + 1].nodeName += `[${path[i].nodeIndex}]`;
+        let dictionaryPath = [];
+        let actualPath = [];
+        for(let i = 0; i < path.length; i++) {
+            const part = path[i];
+            if(part.nodeName != null) {
+                dictionaryPath.push(part.nodeName);
+                switch(part.nodeKind) {
+                    case "array":
+                        actualPath.push(`${part.nodeName}[${part.nodeIndex}]`);
+                        i++;
+                        break;
+                    default:
+                        actualPath.push(part.nodeName);
+                        break;
+                }
             }
         }
+        const fullPath = actualPath.join(".");
+        const fullPathForDictionary = dictionaryPath.join(".");
 
-        const fullPath = path.filter(p => p.nodeName != null).reverse().map(p => p.nodeName).join(".");
-        const pathDescription = this.dataDictionary.lookup({ path: fullPath })
+        const pathDescription = this.dataDictionary.lookup({ path: fullPathForDictionary })
 
         const match = {};
 
         match['type'] = 'document';
+        // match['raw-path'] = path;
         match['path'] = fullPath;
+        // match['dictionary-path'] = fullPathForDictionary;
         match['path-description'] = pathDescription;
         match['match-text'] = node.toString();
         match['matched-text'] = text;

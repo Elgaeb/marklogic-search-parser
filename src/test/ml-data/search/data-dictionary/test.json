@@ -5,6 +5,9 @@
     "$.Name.firstName": {
         "description": "First Name"
     },
+    "$.envelope.instance.Person.names.Name.firstName": {
+        "description": "First Name"
+    },
     "$.favoriteQuote": {
         "description": "Favorite quotation."
     }
