@@ -1,0 +1,230 @@
+{
+    "$id": "http://www.marklogic.com/mlcs/js-search/options.json",
+    "$schema": "http://www.marklogic.com/mlcs/js-search/options#schema",
+    "title": "MarkLogic Javascript Search API Options",
+    "description": "Options used by the MarkLogic JavaScript OSS Search API",
+
+    "definitions": {
+        "value": {
+            "type": "object",
+            "required": [ "type", "value" ],
+            "properties": {
+                "type": { 
+                    "description": "The type of the value.",
+                    "type": "string",
+                    "enum": [ 
+                        "jsonPropertyIndex", 
+                        "pathIndex", 
+                        "fieldIndex", 
+                        "jsonProperty" 
+                    ]
+                },
+                "value": {
+                    "description": "The name of the value, e.g. the property name, index name, etc.",
+                    "type": "string"
+                },
+                "display": {
+                    "description": "A mutation to apply to the displayed value in faceting information, e.g. boolean will display numbers as boolean values (1 = 'true', ...).",
+                    "type": "string",
+                    "enum": [ "boolean" ]
+                }
+            },
+            "allOf": [
+                {
+                    "if": { "properties": { "type": { "enum": [ "jsonPropertyIndex", "pathIndex", "fieldIndex" ] } } },
+                    "then": {
+                        "properties": {
+                            "facet": {
+                                "description": "Boolean indicating whether to return faceting information for this value.",
+                                "type": "boolean" 
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": { "properties": { "type": { "const": "jsonProperty" } } },
+                    "then": {
+                        "properties": {
+                            "useWordQuery": {
+                                "description": "Boolean indicating whether to use a cts.jsonPropertyWordQuery for this value. The default is to use a cts.jsonPropertyValueQuery.",
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    },
+
+    "type": "object",
+    "required": [ ],
+    "properties": {
+        "constraints": {
+            "description": "An array of constraint definitions. Faceted constaints will be returned in the order they are specified.",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "description": "The name of the constraint. This is used when parsing the query to know when to apply the constraint (e.g. if the name is 'Age' then the constraint would be referenced in the query like 'Age IS 23'.",
+                        "type": "string"
+                    },
+                    "type": {
+                        "description": "The type of the constraint. This should be a reference to a module that extends Constraint. If a relative path is used, it will be resolved relative to the path the search api is installed to (/search by default). Provided values include 'constraints/collection' and 'constraints/values'.",
+                        "type": "string"
+                    },
+                    "faceted": {
+                        "description": "Boolean indicating whether to return facet information for this constraint.",
+                        "default": false,
+                        "type": "boolean"
+                    }
+                },
+                "allOf": [
+                    {
+                        "if": {
+                            "properties": { "type": { "const": "constraints/values" } }
+                        },
+                        "then": {
+                            "properties": {
+                                "wildcarded": {
+                                    "description": "Boolean indicating whether to allow wildcards in this constraint. This will have a performance impact if enabled.",
+                                    "default": false,
+                                    "type": "boolean"
+                                },
+                                "facetOptions": { 
+                                    "description": "Additional options to be passed to cts.values.",
+                                    "type": "array",
+                                    "items": { "type": "string" }
+                                },
+                                "value": {
+                                    "description": "The value or values that should be used for this constraint.",
+                                    "oneOf": [
+                                        {
+                                            "type": "array",
+                                            "items": { "$ref": "#/definitions/value" }
+                                        },
+                                        { "$ref": "#/definitions/value" }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "if": {
+                            "properties": { "type": { "const": "constraints/collection" } }
+                        },
+                        "then": {
+                            "properties": {
+                                "wildcarded": {
+                                    "description": "Boolean indicating whether to allow wildcards in this constraint. This can have a severe performance impact if enabled and should not be used.",
+                                    "default": false,
+                                    "type": "boolean"
+                                },
+                                "facetOptions": { 
+                                    "description": "Additional options to be passed to cts.values.",
+                                    "type": "array",
+                                    "items": { "type": "string" }
+                                },
+                                "prefix": {
+                                    "description": "When specified, operate only on collections that begin with this prefix. This will also cause the prefix to be prepended to any values passed to the constraint and removed from any faceting information.",
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        "dataDictionary": {
+            "description": "Define a data dictionary that will be used to provide contextual information in matches.",
+            "type": "object",
+            "oneOf": [
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "document": {
+                            "description": "The URI of a document in MarkLogic that contains the data dictionary.",
+                            "type": "string"
+                        }
+                    } 
+                }
+            ]
+        },
+        "returnQuery": {
+            "description": "Boolean indicating whether or not to return the original string query with the results.",
+            "default": false,
+            "type": "boolean" 
+        },
+        "returnParsedQuery": { 
+            "description": "Boolean indicating whether or not to return the intermediate parsed query with the results.",
+            "default": false,
+            "type": "boolean"
+        },
+        "returnCtsQuery": { 
+            "description": "Boolean indicating whether or not to return the generated cts.query with the results.",
+            "default": false,
+            "type": "boolean"
+        },
+        "returnResults": {
+            "description": "Boolean indicating whether or not to return the documents with the results.",
+            "default": true,
+            "type": "boolean"
+        },
+        "returnMatches": {
+            "description": "Boolean indicating whether or not to return match information with the results.",
+            "default": true,
+            "type": "boolean"
+        },
+        "returnFacets": {
+            "description": "Boolean indicating whether or not to return facets with the results.",
+            "default": true,
+            "type": "boolean"
+        },
+        "returnOptions": {
+            "description": "Boolean indicating whether or not to return the search options with the results.",
+            "default": false,
+            "type": "boolean"
+        },
+        "returnMetrics": {
+            "description": "Boolean indicating whether or not to return timing metrics with the results.",
+            "default": false,
+            "type": "boolean"
+        },
+        "defaultSortOrder": {
+            "description": "The named sort ordeting to apply if no sort order is specified. This should reference one of the properties in sortOrder.",
+            "type": "string"
+        },
+        "sortOrder": {
+            "description": "A collection of named sort orderings that can be conditionally applied to a search.",
+            "type": "object",
+            "additionalProperties": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "description": "The type of ordering to apply. This value corresponds to a cts.order.",
+                            "type": "string",
+                            "enum": [
+                                "index",
+                                "score",
+                                "document",
+                                "confidence",
+                                "fitness",
+                                "quality",
+                                "unordered"
+                            ]
+                        },
+                        "direction": { 
+                            "description": "The direction applied to the sorting.",
+                            "default": "ascending",
+                            "type": "string",
+                            "enum": [ "ascending", "descending" ]
+                         }
+                    }
+                }
+            }
+        }
+    }
+
+}
