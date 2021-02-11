@@ -5,21 +5,50 @@ class CodeValueConstraint extends Constraint {
         super({ options, matcher, parser, typeConverter, constraintConfig, dataDictionary });
     }
 
-    toCts({ parsedQuery }) {
-
-        const valueQueries = [].concat(...[this.constraintConfig.value])
-            .map(valueOptions => this.typeConverter.makeCtsQuery({ parsedQuery, constraintConfig: this.constraintConfig, valueOptions }));
-
-        const ctsQuery = valueQueries.length > 1 ?
-            cts.orQuery(valueQueries) :
-            valueQueries.length == 0 ?
-                cts.falseQuery() :
-                valueQueries[0];
-
-        const additionalQuery = this.constraintConfig.additionalQuery == null ? null : cts.query(this.constraintConfig.additionalQuery);
-
+    scopeToCts({ parsedQuery, scopeOptions }) {
         const query = this.constraintConfig.scope != null ? cts.jsonPropertyScopeQuery(this.constraintConfig.scope, ctsQuery) : ctsQuery;
 
+    }
+
+    valueToCts({ parsedQuery, valueOptions }) {
+        return this.typeConverter.makeCtsQuery({ parsedQuery, constraintConfig: this.constraintConfig, valueOptions });
+    }
+
+    toSubQuery({ parsedQuery, valueOptions = null, scopeOptions = null }) {
+        const valueQueries = [].concat(...[valueOptions])
+            .filter(v => v != null)
+            .map(valueOptions => this.valueToCts({ parsedQuery, valueOptions }));
+
+        const scopeQueries = [].concat(...[scopeOptions])
+            .filter(v => v != null)
+            .map(scopeOptions => this.scopeToCts({ parsedQuery, scopeOptions }));
+
+        const queries = [ ...valueQueries, ...scopeQueries ];
+
+        if(queries.length > 1) {
+            return cts.orQuery(queries);
+        } else if(queries.length == 1) {
+            return queries[0];
+        } else {
+            return cts.falseQuery();
+        }
+    }
+
+    toCts({ parsedQuery }) {
+        const ctsQuery = this.toSubQuery({
+            parsedQuery,
+            valueOptions: this.constraintConfig.value,
+            scopeOptions: this.constraintConfig.scope
+        });
+
+        if(this.constraintConfig.additionalQuery == null) {
+            return query;
+        } else {
+            return cts.andQuery([ 
+                cts.query(this.constraintConfig.additionalQuery),
+                query
+            ]);
+        }
         return additionalQuery == null ? query : cts.andQuery([ additionalQuery, query ]);
     }
 
