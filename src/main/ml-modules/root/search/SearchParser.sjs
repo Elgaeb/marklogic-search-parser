@@ -23,7 +23,7 @@ class TypeConverter {
     makeReference({ valueOptions }) {
         const type = valueOptions.type;
         const options = valueOptions.options == null ? [] : [].concat(...[valueOptions.options]);
-    
+
         switch(type) {
             case "pathIndex":
                 return cts.pathReference(valueOptions.value, options);
@@ -90,45 +90,45 @@ class TypeConverter {
     valueForReferenceQuery({ parsedQuery, ref }) {
         const scalarType = this.referenceScalarType({ ref });
         const { value } = parsedQuery;
-    
+
         switch(scalarType) {
             case "int":
             case "long":
                 return this.parseNumber({value, parse: parseInt});
-    
+
             case "unsignedInt":
             case "unsignedLong":
                 return this.parseNumber({value, parse: x => Math.abs(parseInt(x)) });
-    
+
             case "float":
             case "double":
             case "decimal":
                 return this.parseNumber({value, parse: x => parseFloat });
-    
+
             case "date":
                 switch(value.dataType) {
                     case "decimal":
                     case "integer":
                         const dateFromMillis = DateTime.fromMillis(value.value, { zone: "local" });
                         return dateFromMillis.toISODate();
-    
+
                     case "date":
                         return value.value;
-    
+
                     case "phrase":
                     case "string":
                     default:
                         const dateFromISO = DateTime.fromISO(value.value, { zone: "local" });
                         return dateFromISO.isValid() ? dateFromISO.toISODate() : null;
                 }
-    
+
             case "dateTime":
                 switch(value.dataType) {
                     case "decimal":
                     case "integer":
                         const dateFromMillis = DateTime.fromMillis(value.value, { zone: "local" });
                         return dateFromMillis.toISO();
-    
+
                     case "phrase":
                     case "string":
                     case "date":
@@ -136,10 +136,10 @@ class TypeConverter {
                         const dateFromISO = DateTime.fromISO(value.value, { zone: "local" });
                         return dateFromISO.toISO();
                 }
-    
+
             case "string":
                 return "" + value.value;
-    
+
             case "time":
             case "gYearMonth":
             case "gYear":
@@ -169,30 +169,31 @@ class TypeConverter {
             switch(valueOptions.type) {
                 case "pathIndex":
                 case "jsonPropertyIndex":
+                case "fieldIndex":
                     const rangeOperator = this.rangeOperators[parsedQuery.operator];
                     const ref = this.makeReference({ valueOptions });
                     const desiredValue = (!constraintConfig.wildcarded || !this.referenceCanBeWildcarded({ ref, operator: parsedQuery.operator })) ?
                         this.valueForReferenceQuery({ parsedQuery, ref }) :
                         cts.valueMatch(ref, "" + parsedQuery.value.value);
-        
-                    return desiredValue == null ? 
-                        cts.falseQuery() : 
+
+                    return desiredValue == null ?
+                        cts.falseQuery() :
                         cts.rangeQuery(ref, rangeOperator, desiredValue);
-        
+
                 case "jsonProperty":
                     const ctsOptions = [
                         !!constraintConfig.wildcarded ? "wildcarded" : "unwildcarded"
                     ];
-    
+
                     return !!valueOptions.useWordQuery ?
                         cts.jsonPropertyWordQuery(valueOptions.value, this.valueForWordQuery({ parsedQuery }), ctsOptions) :
                         cts.jsonPropertyValueQuery(valueOptions.value, this.valueForWordQuery({ parsedQuery }), ctsOptions);
-                    
+
                 default:
                     return null;
             }
         }
-    
+
         return getInnerQuery({ parsedQuery, valueOptions, constraintConfig });
     }
 }
@@ -277,7 +278,7 @@ class PathMatcher {
         if(parsedQuery.input != null && parsedQuery.input.text != null) {
             match['query-text'] = parsedQuery.input.text;
         }
-        const found = matches.find(m => 
+        const found = matches.find(m =>
             m.path == match.path
             && m.node == match.node
             && m.text == match.text
@@ -402,24 +403,24 @@ class SearchParser {
                 return [];
             }
         }
-    
+
         switch (parsedQuery.type) {
             case "AND":
                 return cts.andQuery(collectChildren(parsedQuery));
-    
+
             case "OR":
                 return cts.orQuery(collectChildren(parsedQuery));
-    
+
             case "VALUE":
                 const values = this.typeConverter.valueForWordQuery({ parsedQuery });
                 return cts.wordQuery([].concat(...[values]));
-    
+
             case "TRUE":
                 return cts.trueQuery();
-    
+
             case "CONSTRAINT":
                 return this.constraintToCts({ parsedQuery });
-    
+
             default:
                 break;
         }
@@ -444,7 +445,7 @@ class SearchParser {
                 matched: true,
                 matches: []
             };
-    
+
             for(let cq of parsedQuery.children) {
                 const childMatch = this.doMatch({ parsedQuery: cq, doc });
                 if(childMatch.matched) {
@@ -453,17 +454,17 @@ class SearchParser {
                     return { matched: false };
                 }
             }
-    
+
             return matches;
         }
-    
+
         switch (parsedQuery.type) {
             case "AND":
                 return doChildMatch({ parsedQuery, doc, abortOnMiss: true });
-    
+
             case "OR":
                 return doChildMatch({ parsedQuery, doc, abortOnMiss: false });
-    
+
             case "TRUE":
                 return {
                     matched: true,
@@ -477,12 +478,12 @@ class SearchParser {
                     return constraint.generateMatches({ doc, parsedQuery, constraintConfig });
                 }
                 return { matched: true, matches: [] };
-    
+
             default:
                 let query = this.toCts({ parsedQuery });
                 let matches = this.matcher.generateMatches({ doc, query, parsedQuery });
-                return (matches != null && matches.length > 0) ? 
-                    { matched: true, matches } : 
+                return (matches != null && matches.length > 0) ?
+                    { matched: true, matches } :
                     { matched: false, matches: [] };
         }
     }
@@ -499,7 +500,7 @@ class SearchParser {
      */
     toSortOrder({ order, direction }) {
         const options = [ direction ];
-    
+
         switch (order.type) {
             case "index":
                 return cts.indexOrder(this.typeConverter.makeReference({ valueOptions: order.value }), options);
@@ -527,19 +528,19 @@ class SearchParser {
 
     makeSortOrder({ options, orderName, reverse = false }) {
         let sortOrderName = orderName == null ? options.defaultSortOrder : orderName;
-    
+
         if(sortOrderName == null) {
             return cts.scoreOrder([ reverse ? "ascending" : "descending" ]);
         }
-    
+
         let orderOptions = options.sortOrder[sortOrderName];
-    
+
         if(orderOptions == null) {
             return cts.scoreOrder([ reverse ? "ascending" : "descending" ]);
         }
-    
+
         return orderOptions.map(order => this.toSortOrder({ order, reverse }));
-    
+
     }
 
     getConstraint({ constraintConfig, dataDictionary }) {
@@ -586,14 +587,14 @@ class SearchParser {
                 return null;
             }
         }).filter(v => v != null);
-        
+
         return startValues.map(sv => {
             const values = this.finishFacet({
                 startValue: sv.startValue,
                 constraintConfig: sv.constraintConfig,
                 query
             });
-    
+
             return {
                 name: sv.constraintConfig.name,
                 values
