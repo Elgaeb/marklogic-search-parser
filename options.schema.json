@@ -1,6 +1,6 @@
 {
     "$id": "http://www.marklogic.com/mlcs/js-search/options.json",
-    "$schema": "http://www.marklogic.com/mlcs/js-search/options#schema",
+    "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "MarkLogic Javascript Search API Options",
     "description": "Options used by the MarkLogic JavaScript OSS Search API",
 
@@ -73,34 +73,22 @@
             ]
         },
         "scope": {
-            "oneOf": [
-                {
-                    "additionalProperties": false,
-                    "properties": {
-                        "property": {
-                            "description": "The name of the property used to restrict the scope of the children.",
-                            "type": "string"
-                        },
-                        "value": { 
-                            "description": "The values that will be evaluated in this scope.",
-                            "$ref": "#/definitions/values"
-                        }
-                    }
+            "additionalProperties": false,
+            "type": "object",
+            "properties": {
+                "property": {
+                    "description": "The name of the property used to restrict the scope of the children.",
+                    "type": "string"
                 },
-                {
-                    "additionalProperties": false,
-                    "properties": {
-                        "property": {
-                            "description": "The name of the property used to restrict the scope of the children.",
-                            "type": "string"
-                        },
-                        "scope": { 
-                            "description": "An addtition scope that child values must be nested within.",
-                            "$ref": "#/definitions/scopes"
-                        }
-                    }
+                "value": {
+                    "description": "The values that will be evaluated in this scope.",
+                    "$ref": "#/definitions/values"
+                },
+                "scope": {
+                    "description": "An additional scope that child values must be nested within.",
+                    "$ref": "#/definitions/scopes"
                 }
-            ]
+            }
         }
     },
 
@@ -109,7 +97,7 @@
     "properties": {
         "constraints": {
             "additionalProperties": false,
-            "description": "An array of constraint definitions. Faceted constaints will be returned in the order they are specified.",
+            "description": "An array of constraint definitions. Faceted constraints will be returned in the order they are specified.",
             "type": "array",
             "items": {
                 "type": "object",
@@ -150,6 +138,10 @@
                                 },
                                 "scope": {
                                     "$ref": "#/definitions/scopes"
+                                },
+                                "additionalQuery": {
+                                    "description": "An additional query used to further constrain the results of this constraint. This should be a cts.query serialized into JSON.",
+                                    "type": "object"
                                 }
                             }
                         }
@@ -236,7 +228,7 @@
             "type": "boolean"
         },
         "defaultSortOrder": {
-            "description": "The named sort ordeting to apply if no sort order is specified. This should reference one of the properties in sortOrder.",
+            "description": "The named sort ordering to apply if no sort order is specified. This should reference one of the properties in sortOrder.",
             "type": "string"
         },
         "sortOrder": {

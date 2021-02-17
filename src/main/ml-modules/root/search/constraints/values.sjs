@@ -6,8 +6,9 @@ class CodeValueConstraint extends Constraint {
     }
 
     scopeToCts({ parsedQuery, scopeOptions }) {
-        const query = this.constraintConfig.scope != null ? cts.jsonPropertyScopeQuery(this.constraintConfig.scope, ctsQuery) : ctsQuery;
-
+        const { property, value, scope } = scopeOptions;
+        const subQuery = this.toSubQuery({ parsedQuery, valueOptions: value, scopeOptions: scope });
+        return cts.jsonPropertyScopeQuery(property, subQuery);
     }
 
     valueToCts({ parsedQuery, valueOptions }) {
@@ -44,15 +45,62 @@ class CodeValueConstraint extends Constraint {
         if(this.constraintConfig.additionalQuery == null) {
             return query;
         } else {
-            return cts.andQuery([ 
+            return cts.andQuery([
                 cts.query(this.constraintConfig.additionalQuery),
                 query
             ]);
         }
-        return additionalQuery == null ? query : cts.andQuery([ additionalQuery, query ]);
+    }
+
+    facetValuesFor({ scopeStack = [], parsedQuery, valueOptions = null, scopeOptions = null, facetAllReferences = false }) {
+        const valueReferences = [].concat(...[valueOptions])
+            .filter(valueOptions => valueOptions != null && (!!valueOptions.facet || facetAllReferences))
+            .map(valueOptions => {
+                const reference = this.typeConverter.makeReference({ valueOptions });
+                return {
+                    options: valueOptions,
+                    reference: this.typeConverter.makeReference({ valueOptions })
+                }
+            })
+            .filter(v => v.reference != null);
+
+        const subScopeReferences = [].concat(...scopeOptions.map(sopt => {
+            return this.facetValuesFor({
+                facetAllReferences,
+                scopeStack,
+                valueOptions: sopt.value,
+                scopeOptions: sopt.scope
+            });
+        }));
+
+        return [ ...valueReferences, ...subScopeReferences ];
+
     }
 
     startFacet({ query }) {
+        let references = this.facetValuesFor({
+            parsedQuery,
+            valueOptions: this.constraintConfig.value,
+            scopeOptions: this.constraintConfig.scope
+        });
+
+        if(references.length == 0) {
+            references = this.facetValuesFor({
+                facetAllReferences: true,
+                parsedQuery,
+                valueOptions: this.constraintConfig.value,
+                scopeOptions: this.constraintConfig.scope
+            });
+        }
+
+        const additionalOptions = this.constraintConfig.facetOptions || [];
+        return references.map(reference => ({
+            options: reference.options,
+            values: cts.values(reference.reference, null, [].concat(["concurrent", ...additionalOptions]), query)
+        }));
+    }
+
+    startFacetX({ query }) {
 
         const valueConfigs = [].concat(...[this.constraintConfig.value]);
         if (valueConfigs.length > 0) {
@@ -88,9 +136,9 @@ class CodeValueConstraint extends Constraint {
     }
 
     /**
-     * 
+     *
      * @param startValue the value returned from startFacet
-     * @param query the cts query used to perform the initial search 
+     * @param query the cts query used to perform the initial search
      */
     finishFacet({ startValue, query }) {
         const out = [];
@@ -99,7 +147,7 @@ class CodeValueConstraint extends Constraint {
         startValue.map(reference => {
             let coercionFn = x => x.toString();
             switch(reference.options.display) {
-                case "boolean": 
+                case "boolean":
                     coercionFn = x => ("" + x) == "1" ? "true" : "false";
                     break;
                 default:
@@ -108,7 +156,7 @@ class CodeValueConstraint extends Constraint {
             for (let value of reference.values) {
                 const name = coercionFn(value);
                 const existing = outHash[name];
-    
+
                 if (existing != null) {
                     existing.count += cts.frequency(value);
                 } else {
