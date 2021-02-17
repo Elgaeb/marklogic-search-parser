@@ -29,13 +29,33 @@ class SearchService {
         this.dataDictionary = dataDictionary;
     }
 
-    opt({ propertyName, params, defaultValue }) {
+    booleanOption({ propertyName, params, defaultValue }) {
+
+        let value = defaultValue;
+
         if (params != null && params[propertyName] != null) {
-            return params[propertyName];
+            value = params[propertyName];
         } else if (this.options[propertyName] != null) {
-            return this.options[propertyName];
-        } else {
-            return defaultValue;
+            value = this.options[propertyName];
+        }
+
+        switch(typeof(value)) {
+            case 'boolean':
+                return value;
+            case 'number':
+                return value != 0;
+            case 'string':
+                switch(value.toLowerCase()) {
+                    case "t":
+                    case "true":
+                    case "yes":
+                    case "1":
+                        return true;
+                    default:
+                        return false;
+                }
+            default:
+                return false;
         }
     }
 
@@ -48,14 +68,14 @@ class SearchService {
         const orderName = params.sort;
         const reverse = !!params.reverse;
 
-        const returnQuery = this.opt({ propertyName: 'returnQuery', params, defaultValue: false });
-        const returnParsedQuery = this.opt({ propertyName: 'returnParsedQuery', params, defaultValue: false });
-        const returnCtsQuery = this.opt({ propertyName: 'returnCtsQuery', params, defaultValue: false });
-        const returnResults = this.opt({ propertyName: 'returnResults', params, defaultValue: true });
-        const returnMatches = this.opt({ propertyName: 'returnMatches', params, defaultValue: true });
-        const returnFacets = this.opt({ propertyName: 'returnFacets', params, defaultValue: true });
-        const returnOptions = this.opt({ propertyName: 'returnOptions', params, defaultValue: false });
-        const returnMetrics = this.opt({ propertyName: 'returnMetrics', params, defaultValue: false });
+        const returnQuery = this.booleanOption({ propertyName: 'returnQuery', params, defaultValue: false });
+        const returnParsedQuery = this.booleanOption({ propertyName: 'returnParsedQuery', params, defaultValue: false });
+        const returnCtsQuery = this.booleanOption({ propertyName: 'returnCtsQuery', params, defaultValue: false });
+        const returnResults = this.booleanOption({ propertyName: 'returnResults', params, defaultValue: true });
+        const returnMatches = this.booleanOption({ propertyName: 'returnMatches', params, defaultValue: true });
+        const returnFacets = this.booleanOption({ propertyName: 'returnFacets', params, defaultValue: true });
+        const returnOptions = this.booleanOption({ propertyName: 'returnOptions', params, defaultValue: false });
+        const returnMetrics = this.booleanOption({ propertyName: 'returnMetrics', params, defaultValue: false });
 
         return {
             qtext,
@@ -111,7 +131,7 @@ class SearchService {
         });
 
         metrics.parserInstantiationDuration = parserInstantiationDuration;
-        
+
         const { parseDuration } = time({
             metricsProperty: 'parseDuration',
             timedFunction: () => parser.parse(qtext)
@@ -179,7 +199,7 @@ class SearchService {
                                 content: [ doc ]
                             }
                         };
-            
+
                         if (returnMatches) {
                             const { matchDuration, matches } = time({
                                 metricsProperty: 'matchDuration',
@@ -194,7 +214,7 @@ class SearchService {
                             }
                             docResult.matches = matches;
                         }
-        
+
                         resultsArr.push(docResult);
                     }
                 }
