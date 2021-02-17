@@ -43,51 +43,56 @@ class CodeValueConstraint extends Constraint {
         });
 
         if(this.constraintConfig.additionalQuery == null) {
-            return query;
+            return ctsQuery;
         } else {
             return cts.andQuery([
                 cts.query(this.constraintConfig.additionalQuery),
-                query
+                ctsQuery
             ]);
         }
     }
 
-    facetValuesFor({ scopeStack = [], parsedQuery, valueOptions = null, scopeOptions = null, facetAllReferences = false }) {
-        const valueReferences = [].concat(...[valueOptions])
-            .filter(valueOptions => valueOptions != null && (!!valueOptions.facet || facetAllReferences))
-            .map(valueOptions => {
-                const reference = this.typeConverter.makeReference({ valueOptions });
-                return {
-                    options: valueOptions,
-                    reference: this.typeConverter.makeReference({ valueOptions })
-                }
-            })
-            .filter(v => v.reference != null);
+    facetValuesFor({ value = null, scope = null, property = null, facetAllReferences = false }) {
+        const innerFacetValues = ({ valueOptions }) => {
+            return [].concat(...[valueOptions])
+                .filter(v => v != null)
+                .filter(valueOptions => valueOptions != null && (!!valueOptions.facet || facetAllReferences))
+                .map(valueOptions => {
+                    return {
+                        options: valueOptions,
+                        reference: this.typeConverter.makeReference({ valueOptions })
+                    }
+                })
+                .filter(v => v.reference != null);
+        };
 
-        const subScopeReferences = [].concat(...scopeOptions.map(sopt => {
-            return this.facetValuesFor({
-                facetAllReferences,
-                scopeStack,
-                valueOptions: sopt.value,
-                scopeOptions: sopt.scope
-            });
-        }));
+        const outValues  = [];
 
-        return [ ...valueReferences, ...subScopeReferences ];
+        if(value != null) {
+            innerFacetValues({ valueOptions: value }).forEach(v => outValues.push(v));
+        }
 
+        if(scope != null) {
+            this.facetValuesFor({
+                value: scope.value,
+                scope: scope.scope,
+                property: scope.property,
+                facetAllReferences
+            }).forEach(v => outValues.push(v));
+        }
+
+        return outValues;
     }
 
     startFacet({ query }) {
         let references = this.facetValuesFor({
-            parsedQuery,
-            valueOptions: this.constraintConfig.value,
-            scopeOptions: this.constraintConfig.scope
+            value: this.constraintConfig.value,
+            scope: this.constraintConfig.scope
         });
 
         if(references.length == 0) {
             references = this.facetValuesFor({
                 facetAllReferences: true,
-                parsedQuery,
                 valueOptions: this.constraintConfig.value,
                 scopeOptions: this.constraintConfig.scope
             });
@@ -98,41 +103,6 @@ class CodeValueConstraint extends Constraint {
             options: reference.options,
             values: cts.values(reference.reference, null, [].concat(["concurrent", ...additionalOptions]), query)
         }));
-    }
-
-    startFacetX({ query }) {
-
-        const valueConfigs = [].concat(...[this.constraintConfig.value]);
-        if (valueConfigs.length > 0) {
-            let references = valueConfigs
-                .filter(valueOptions => !!valueOptions.facet)
-                .map(valueOptions => ({
-                    options: valueOptions,
-                    reference: this.typeConverter.makeReference({ valueOptions })
-                }));
-
-            if (references.length == 0) {
-                // We had no values with "facet": true so use every reference defined that can map
-                // to an index
-                references = valueConfigs
-                    .map(valueOptions => ({
-                        options: valueOptions,
-                        reference: this.typeConverter.makeReference({ valueOptions })
-                    }))
-                    .filter(v => v.reference != null)
-                    ;
-
-            }
-
-            const additionalOptions = this.constraintConfig.facetOptions || [];
-
-            return references.map(reference => ({
-                options: reference.options,
-                values: cts.values(reference.reference, null, [].concat(["concurrent", ...additionalOptions]), query)
-            }));
-        } else {
-            return Sequence.from([]);
-        }
     }
 
     /**
