@@ -47,13 +47,13 @@ const lexer = moo.compile({
         }},
     ],
     word: {
-      match: 
+      match:
         // /[^\P{Po}:]+/u,
-        /(?:\p{L}\p{M}*|\p{N}|\p{S}|\p{Pc}|\p{Pd}|[^\P{Po}:])+/u, 
-        // /(?:\p{L}\p{M}*|\p{N}|\p{S}|\p{Pc}|\p{Pd}|\p{Po})+/u, 
+        /(?:\p{L}\p{M}*|\p{N}|\p{S}|\p{Pc}|\p{Pd}|[^\P{Po}:])+/u,
+        // /(?:\p{L}\p{M}*|\p{N}|\p{S}|\p{Pc}|\p{Pd}|\p{Po})+/u,
         // /[0-9A-Za-z]+[\w\-_]*/u, type: moo.keywords({
       lineBreaks: true,
-      type: moo.keywords({ 
+      type: moo.keywords({
         "kw_and": "AND",
         "kw_or": "OR",
         "kw_not": "NOT",
@@ -67,6 +67,7 @@ const lexer = moo.compile({
         "kw_gt": "GT",
         "kw_ge": "GE",
         "kw_ne": "NE",
+        "kw_dne": "DNE",
         "kw_near": "NEAR",
         "kw_boost": "BOOST",
         "kw_contains": "CONTAINS",
@@ -191,6 +192,22 @@ function __constraint(wx, operator, nx) {
   }
 }
 
+function __dne_constraint(wx, ox) {
+  const name = wx.value;
+
+  const offset = wx.offset;
+  const length = ox.text.length + ox.offset - offset;
+  return {
+    type: 'CONSTRAINT',
+    name: name,
+    operator: 'DNE',
+    input: {
+      offset,
+      length
+    }
+  }
+}
+
 var grammar = {
     Lexer: lexer,
     ParserRules: [
@@ -213,6 +230,7 @@ var grammar = {
     {"name": "value_terminal", "symbols": [(lexer.has("double_quoted_string") ? {type: "double_quoted_string"} : double_quoted_string)], "postprocess": ([wx]) => __phrase(wx)},
     {"name": "constraint_terminal", "symbols": [(lexer.has("word") ? {type: "word"} : word), "equality_terminal", "value_terminal"], "postprocess": ([wx, cx, tx]) => __constraint(wx, 'EQ', tx)},
     {"name": "constraint_terminal", "symbols": [(lexer.has("word") ? {type: "word"} : word), "range_terminal", "value_terminal"], "postprocess": ([wx, cx, tx]) => __constraint(wx, head(cx).value, tx)},
+    {"name": "constraint_terminal", "symbols": [(lexer.has("word") ? {type: "word"} : word), "dne_terminal"], "postprocess": ([wx, ox]) => __dne_constraint(wx, head(ox))},
     {"name": "range_terminal", "symbols": [(lexer.has("kw_lt") ? {type: "kw_lt"} : kw_lt)]},
     {"name": "range_terminal", "symbols": [(lexer.has("kw_le") ? {type: "kw_le"} : kw_le)]},
     {"name": "range_terminal", "symbols": [(lexer.has("kw_gt") ? {type: "kw_gt"} : kw_gt)]},
@@ -220,7 +238,8 @@ var grammar = {
     {"name": "equality_terminal$subexpression$1", "symbols": [(lexer.has("kw_eq") ? {type: "kw_eq"} : kw_eq)]},
     {"name": "equality_terminal$subexpression$1", "symbols": [(lexer.has("kw_is") ? {type: "kw_is"} : kw_is)]},
     {"name": "equality_terminal$subexpression$1", "symbols": [(lexer.has("colon") ? {type: "colon"} : colon)]},
-    {"name": "equality_terminal", "symbols": ["equality_terminal$subexpression$1"]}
+    {"name": "equality_terminal", "symbols": ["equality_terminal$subexpression$1"]},
+    {"name": "dne_terminal", "symbols": [(lexer.has("kw_dne") ? {type: "kw_dne"} : kw_dne)]}
 ]
   , ParserStart: "expression"
 }

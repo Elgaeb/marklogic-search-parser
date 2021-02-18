@@ -43,13 +43,13 @@ const lexer = moo.compile({
         }},
     ],
     word: {
-      match: 
+      match:
         // /[^\P{Po}:]+/u,
-        /(?:\p{L}\p{M}*|\p{N}|\p{S}|\p{Pc}|\p{Pd}|[^\P{Po}:])+/u, 
-        // /(?:\p{L}\p{M}*|\p{N}|\p{S}|\p{Pc}|\p{Pd}|\p{Po})+/u, 
+        /(?:\p{L}\p{M}*|\p{N}|\p{S}|\p{Pc}|\p{Pd}|[^\P{Po}:])+/u,
+        // /(?:\p{L}\p{M}*|\p{N}|\p{S}|\p{Pc}|\p{Pd}|\p{Po})+/u,
         // /[0-9A-Za-z]+[\w\-_]*/u, type: moo.keywords({
       lineBreaks: true,
-      type: moo.keywords({ 
+      type: moo.keywords({
         "kw_and": "AND",
         "kw_or": "OR",
         "kw_not": "NOT",
@@ -63,6 +63,7 @@ const lexer = moo.compile({
         "kw_gt": "GT",
         "kw_ge": "GE",
         "kw_ne": "NE",
+        "kw_dne": "DNE",
         "kw_near": "NEAR",
         "kw_boost": "BOOST",
         "kw_contains": "CONTAINS",
@@ -187,6 +188,22 @@ function __constraint(wx, operator, nx) {
   }
 }
 
+function __dne_constraint(wx, ox) {
+  const name = wx.value;
+
+  const offset = wx.offset;
+  const length = ox.text.length + ox.offset - offset;
+  return {
+    type: 'CONSTRAINT',
+    name: name,
+    operator: 'DNE',
+    input: {
+      offset,
+      length
+    }
+  }
+}
+
 %}
 
 @lexer lexer
@@ -216,9 +233,13 @@ value_terminal -> %double_quoted_string {% ([wx]) => __phrase(wx) %}
 
 constraint_terminal -> %word equality_terminal value_terminal {% ([wx, cx, tx]) => __constraint(wx, 'EQ', tx) %}
 constraint_terminal -> %word range_terminal value_terminal {% ([wx, cx, tx]) => __constraint(wx, head(cx).value, tx) %}
+constraint_terminal -> %word dne_terminal {% ([wx, ox]) => __dne_constraint(wx, head(ox)) %}
 
 range_terminal -> %kw_lt
 range_terminal -> %kw_le
 range_terminal -> %kw_gt
 range_terminal -> %kw_ge
+
 equality_terminal -> (%kw_eq | %kw_is | %colon)
+
+dne_terminal -> %kw_dne
