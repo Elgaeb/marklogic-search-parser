@@ -12,23 +12,29 @@ class CodeValueConstraint extends Constraint {
     }
 
     valueToCts({ parsedQuery, valueOptions }) {
-        return this.typeConverter.makeCtsQuery({ parsedQuery, constraintConfig: this.constraintConfig, valueOptions });
+        return this.typeConverter.makeCtsQuery({
+            parsedQuery,
+            constraintConfig: this.constraintConfig,
+            valueOptions,
+        });
     }
 
     toSubQuery({ parsedQuery, valueOptions = null, scopeOptions = null }) {
-        const valueQueries = [].concat(...[valueOptions])
-            .filter(v => v != null)
-            .map(valueOptions => this.valueToCts({ parsedQuery, valueOptions }));
+        const valueQueries = []
+            .concat(...[valueOptions])
+            .filter((v) => v != null)
+            .map((valueOptions) => this.valueToCts({ parsedQuery, valueOptions }));
 
-        const scopeQueries = [].concat(...[scopeOptions])
-            .filter(v => v != null)
-            .map(scopeOptions => this.scopeToCts({ parsedQuery, scopeOptions }));
+        const scopeQueries = []
+            .concat(...[scopeOptions])
+            .filter((v) => v != null)
+            .map((scopeOptions) => this.scopeToCts({ parsedQuery, scopeOptions }));
 
-        const queries = [ ...valueQueries, ...scopeQueries ];
+        const queries = [...valueQueries, ...scopeQueries];
 
-        if(queries.length > 1) {
+        if (queries.length > 1) {
             return cts.orQuery(queries);
-        } else if(queries.length == 1) {
+        } else if (queries.length == 1) {
             return queries[0];
         } else {
             return cts.falseQuery();
@@ -39,46 +45,130 @@ class CodeValueConstraint extends Constraint {
         const ctsQuery = this.toSubQuery({
             parsedQuery,
             valueOptions: this.constraintConfig.value,
-            scopeOptions: this.constraintConfig.scope
+            scopeOptions: this.constraintConfig.scope,
         });
 
-        if(this.constraintConfig.additionalQuery == null) {
+        if (this.constraintConfig.additionalQuery == null) {
             return ctsQuery;
         } else {
-            return cts.andQuery([
-                cts.query(this.constraintConfig.additionalQuery),
-                ctsQuery
-            ]);
+            return cts.andQuery([cts.query(this.constraintConfig.additionalQuery), ctsQuery]);
+        }
+    }
+
+    makeCtsQueryForPropertyScope({
+        parsedQuery,
+        constraintConfig,
+        valueOptions,
+        query = cts.trueQuery(),
+    }) {
+        const getInnerQuery = ({ parsedQuery, valueOptions, constraintConfig, query }) => {
+            switch (valueOptions.type) {
+                case 'pathIndex':
+                case 'fieldIndex':
+                    const propertyName = valueOptions.propertyForDne;
+                    return cts.jsonPropertyScopeQuery(propertyName, query);
+
+                case 'jsonPropertyIndex':
+                case 'jsonProperty':
+                    const propertyName = valueOptions.value;
+                    return cts.jsonPropertyScopeQuery(propertyName, query);
+
+                default:
+                    return null;
+            }
+        };
+
+        return getInnerQuery({ parsedQuery, valueOptions, constraintConfig, query });
+    }
+
+    scopeToCtsExists({ parsedQuery, scopeOptions }) {
+        const { property, value, scope } = scopeOptions;
+
+        const subQuery = this.toExistsSubQuery({
+            parsedQuery,
+            valueOptions: value,
+            scopeOptions: scope,
+        });
+        return cts.jsonPropertyScopeQuery(property, subQuery);
+    }
+
+    valueToCtsExists({ parsedQuery, valueOptions }) {
+        return this.makeCtsQueryForPropertyScope({
+            parsedQuery,
+            constraintConfig: this.constraintConfig,
+            valueOptions,
+        });
+    }
+
+    toExistsSubQuery({ parsedQuery, valueOptions = null, scopeOptions = null }) {
+        const valueQueries = []
+            .concat(...[valueOptions])
+            .filter((v) => v != null)
+            .map((valueOptions) => this.valueToCtsExists({ parsedQuery, valueOptions }))
+            .filter((v) => v != null);
+
+        const scopeQueries = []
+            .concat(...[scopeOptions])
+            .filter((v) => v != null)
+            .map((scopeOptions) => this.scopeToCtsExists({ parsedQuery, scopeOptions }))
+            .filter((v) => v != null);
+
+        const queries = [...valueQueries, ...scopeQueries];
+
+        if (queries.length > 1) {
+            return cts.andQuery(queries);
+        } else if (queries.length == 1) {
+            return queries[0];
+        } else {
+            return cts.falseQuery();
+        }
+    }
+
+    toCtsDne({ parsedQuery }) {
+        const ctsQuery = this.toExistsSubQuery({
+            parsedQuery,
+            valueOptions: this.constraintConfig.value,
+            scopeOptions: this.constraintConfig.scope,
+        });
+
+        if (this.constraintConfig.additionalQuery == null) {
+            return cts.notQuery(ctsQuery);
+        } else {
+            return cts.andQuery([cts.query(this.constraintConfig.additionalQuery), ctsQuery]);
         }
     }
 
     facetValuesFor({ value = null, scope = null, property = null, facetAllReferences = false }) {
         const innerFacetValues = ({ valueOptions }) => {
-            return [].concat(...[valueOptions])
-                .filter(v => v != null)
-                .filter(valueOptions => valueOptions != null && (!!valueOptions.facet || facetAllReferences))
-                .map(valueOptions => {
+            return []
+                .concat(...[valueOptions])
+                .filter((v) => v != null)
+                .filter(
+                    (valueOptions) =>
+                        valueOptions != null && (!!valueOptions.facet || facetAllReferences)
+                )
+                .map((valueOptions) => {
                     return {
                         options: valueOptions,
-                        reference: this.typeConverter.makeReference({ valueOptions })
-                    }
+                        reference: this.typeConverter.makeReference({ valueOptions }),
+                    };
                 })
-                .filter(v => v.reference != null);
+                .filter((v) => v.reference != null);
         };
 
-        const outValues  = [];
+        const outValues = [];
 
-        if(value != null) {
-            innerFacetValues({ valueOptions: value }).forEach(v => outValues.push(v));
+        if (value != null) {
+            innerFacetValues({ valueOptions: value }).forEach((v) => outValues.push(v));
         }
 
-        if(scope != null) {
+        if (scope != null) {
             this.facetValuesFor({
                 value: scope.value,
                 scope: scope.scope,
                 property: scope.property,
-                facetAllReferences
-            }).forEach(v => outValues.push(v));
+                facetAllReferences,
+            }).forEach((v) => outValues.push(v));
         }
 
         return outValues;
@@ -87,21 +177,26 @@ class CodeValueConstraint extends Constraint {
     startFacet({ query }) {
         let references = this.facetValuesFor({
             value: this.constraintConfig.value,
-            scope: this.constraintConfig.scope
+            scope: this.constraintConfig.scope,
         });
 
-        if(references.length == 0) {
+        if (references.length == 0) {
             references = this.facetValuesFor({
                 facetAllReferences: true,
                 valueOptions: this.constraintConfig.value,
-                scopeOptions: this.constraintConfig.scope
+                scopeOptions: this.constraintConfig.scope,
             });
         }
 
         const additionalOptions = this.constraintConfig.facetOptions || [];
-        return references.map(reference => ({
+        return references.map((reference) => ({
             options: reference.options,
-            values: cts.values(reference.reference, null, [].concat(["concurrent", ...additionalOptions]), query)
+            values: cts.values(
+                reference.reference,
+                null,
+                [].concat(['concurrent', ...additionalOptions]),
+                query
+            ),
         }));
     }
 
@@ -114,11 +209,11 @@ class CodeValueConstraint extends Constraint {
         const out = [];
         const outHash = {};
 
-        startValue.map(reference => {
-            let coercionFn = x => x.toString();
-            switch(reference.options.display) {
-                case "boolean":
-                    coercionFn = x => ("" + x) == "1" ? "true" : "false";
+        startValue.map((reference) => {
+            let coercionFn = (x) => x.toString();
+            switch (reference.options.display) {
+                case 'boolean':
+                    coercionFn = (x) => ('' + x == '1' ? 'true' : 'false');
                     break;
                 default:
                     break;
@@ -132,7 +227,7 @@ class CodeValueConstraint extends Constraint {
                 } else {
                     const newValue = {
                         name: name,
-                        count: cts.frequency(value)
+                        count: cts.frequency(value),
                     };
                     out.push(newValue);
                     outHash[name] = newValue;
@@ -142,7 +237,6 @@ class CodeValueConstraint extends Constraint {
 
         return out;
     }
-
 }
 
 module.exports = CodeValueConstraint;

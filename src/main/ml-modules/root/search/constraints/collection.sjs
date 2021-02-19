@@ -6,33 +6,35 @@ class CollectionConstraint extends Constraint {
     }
 
     toCts({ parsedQuery }) {
-        const collectionName = `${this.constraintConfig.prefix == null ? "" : this.constraintConfig.prefix}${parsedQuery.value.value}`;
+        const collectionName = `${
+            this.constraintConfig.prefix == null ? '' : this.constraintConfig.prefix
+        }${parsedQuery.value.value}`;
 
-        const desiredValue = (!this.constraintConfig.wildcarded) ?
-            [ collectionName ] :
-            cts.valueMatch(
-                cts.collectionReference([]),
-                collectionName,
-                []
-            );
-    
+        const desiredValue = !this.constraintConfig.wildcarded
+            ? [collectionName]
+            : cts.valueMatch(cts.collectionReference([]), collectionName, []);
+
         return cts.collectionQuery(desiredValue);
     }
 
+    toCtsDne({ parsedQuery }) {
+        return cts.falseQuery();
+    }
+
     startFacet({ query }) {
-        const reference = cts.collectionReference([]); 
+        const reference = cts.collectionReference([]);
         const additionalOptions = this.constraintConfig.facetOptions || [];
-        return cts.values(reference, null, [].concat([ "concurrent", ...additionalOptions]), query);
+        return cts.values(reference, null, [].concat(['concurrent', ...additionalOptions]), query);
     }
 
     finishFacet({ startValue, query }) {
         const out = [];
         const outHash = {};
-        const prefix = this.constraintConfig.prefix == null ? "" : this.constraintConfig.prefix;
+        const prefix = this.constraintConfig.prefix == null ? '' : this.constraintConfig.prefix;
 
         for (let value of startValue) {
             const name = value.toString();
-            if(name.startsWith(prefix)) {
+            if (name.startsWith(prefix)) {
                 const existing = outHash[name];
 
                 if (existing != null) {
@@ -40,7 +42,7 @@ class CollectionConstraint extends Constraint {
                 } else {
                     const newValue = {
                         name: name,
-                        count: cts.frequency(value)
+                        count: cts.frequency(value),
                     };
                     out.push(newValue);
                     outHash[name] = newValue;
@@ -48,37 +50,42 @@ class CollectionConstraint extends Constraint {
             }
         }
 
-        return prefix == "" ? out : out.map(value => ({
-            name: value.name.substr(prefix.length),
-            count: value.count
-        }));
+        return prefix == ''
+            ? out
+            : out.map((value) => ({
+                  name: value.name.substr(prefix.length),
+                  count: value.count,
+              }));
     }
 
-
     generateMatches({ doc, parsedQuery, constraintConfig }) {
-        const collectionName = `${this.constraintConfig.prefix == null ? "" : this.constraintConfig.prefix}${parsedQuery.value.value}`;
-        const desiredCollections = (!this.constraintConfig.wildcarded) ?
-            [ collectionName ] :
-            cts.valueMatch(
-                cts.collectionReference([]),
-                collectionName,
-                [],
-                cts.documentQuery([ fn.baseUri(doc) ])
-            ).toArray().map(v => v.toString());
+        const collectionName = `${
+            this.constraintConfig.prefix == null ? '' : this.constraintConfig.prefix
+        }${parsedQuery.value.value}`;
+        const desiredCollections = !this.constraintConfig.wildcarded
+            ? [collectionName]
+            : cts
+                  .valueMatch(
+                      cts.collectionReference([]),
+                      collectionName,
+                      [],
+                      cts.documentQuery([fn.baseUri(doc)])
+                  )
+                  .toArray()
+                  .map((v) => v.toString());
 
         const documentCollections = xdmp.documentGetCollections(fn.baseUri(doc));
         const matches = desiredCollections
-            .filter(collection => documentCollections.includes(collection))
-            .map(collection => ({
-                "type": 'collection',
+            .filter((collection) => documentCollections.includes(collection))
+            .map((collection) => ({
+                type: 'collection',
                 collection,
-                "query-text": parsedQuery.input.text
+                'query-text': parsedQuery.input.text,
             }));
         const matched = matches.length > 0;
 
         return { matched, matches };
     }
-
 }
 
 module.exports = CollectionConstraint;
