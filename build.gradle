@@ -40,6 +40,8 @@ spotless {
 			exclude "src/main/ml-modules/root/search/moo.js"
 			exclude "src/main/ml-modules/root/search/nearley.js"
 			exclude "src/main/ml-modules/root/search/underscore.js"
+
+			exclude "src/test/ml-modules/root/thirdparty/**/*"
 		}
 
 		// you can also slurp from a file or even provide both (inline always takes precedence over file)

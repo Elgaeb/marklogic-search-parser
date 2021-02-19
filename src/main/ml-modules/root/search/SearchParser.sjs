@@ -439,6 +439,9 @@ class SearchParser {
             case 'CONSTRAINT':
                 return this.constraintToCts({ parsedQuery });
 
+            case 'DNE':
+                return this.constraintToCtsDne({ parsedQuery });
+
             default:
                 break;
         }
@@ -581,9 +584,25 @@ class SearchParser {
 
     constraintToCts({ parsedQuery }) {
         const constraintConfig = this.constraintMap[parsedQuery.name];
-        return constraintConfig != null
-            ? this.getConstraint({ constraintConfig }).toCts({ parsedQuery, constraintConfig })
-            : cts.trueQuery();
+
+        if (constraintConfig != null) {
+            const constraint = this.getConstraint({ constraintConfig });
+            switch (parsedQuery.operator) {
+                case 'DNE':
+                    return constraint.toCtsDne({ parsedQuery, constraintConfig });
+
+                default:
+                    return constrsaint.toCts({ parsedQuery, constraintConfig });
+            }
+        } else {
+            switch (parsedQuery.operator) {
+                case 'DNE':
+                    return cts.falseQuery();
+
+                default:
+                    return cts.trueQuery();
+            }
+        }
     }
 
     /**

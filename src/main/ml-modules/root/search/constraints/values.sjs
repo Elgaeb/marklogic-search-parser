@@ -65,13 +65,11 @@ class CodeValueConstraint extends Constraint {
             switch (valueOptions.type) {
                 case 'pathIndex':
                 case 'fieldIndex':
-                    const propertyName = valueOptions.propertyForDne;
-                    return cts.jsonPropertyScopeQuery(propertyName, query);
+                    return cts.jsonPropertyScopeQuery(valueOptions.propertyForDne, query);
 
                 case 'jsonPropertyIndex':
                 case 'jsonProperty':
-                    const propertyName = valueOptions.value;
-                    return cts.jsonPropertyScopeQuery(propertyName, query);
+                    return cts.jsonPropertyScopeQuery(valueOptions.value, query);
 
                 default:
                     return null;
@@ -236,6 +234,34 @@ class CodeValueConstraint extends Constraint {
         });
 
         return out;
+    }
+
+    generateMatches({ doc, parsedQuery, constraintConfig }) {
+        switch (parsedQuery.operator) {
+            case 'DNE': {
+                let query = this.toCtsDne({ parsedQuery, constraintConfig });
+                let matched = cts.contains(doc, query);
+                return {
+                    matched,
+                    query,
+                    parsedQuery,
+                    matches: [
+                        {
+                            type: 'missing',
+                            'query-text': parsedQuery.input.text,
+                        },
+                    ],
+                };
+            }
+
+            default: {
+                let query = this.toCts({ parsedQuery, constraintConfig });
+                let matches = this.matcher.generateMatches({ doc, query, parsedQuery });
+                return matches != null && matches.length > 0
+                    ? { matched: true, query, parsedQuery, matches }
+                    : { matched: false, query, parsedQuery, matches: [] };
+            }
+        }
     }
 }
 
