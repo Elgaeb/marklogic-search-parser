@@ -1,66 +1,66 @@
 {
     "constraints": [
-      {
-        "name": "Collection",
-        "type": "constraints/collection",
-        "faceted": true,
-        "wildcarded": false,
-        "facetOptions": ["frequency-order", "descending", "fragment-frequency", "limit=20"]
-      },
-      {
-        "name": "BirthDate",
-        "type": "constraints/values",
-        "faceted": false,
-        "wildcarded": true,
-        "facetOptions": ["item-order", "descending", "fragment-frequency", "limit=3"],
-        "value": [{ "type": "jsonPropertyIndex", "value": "birthDate", "facet": true }]
-      },
-      {
-        "name": "Updated",
-        "type": "constraints/values",
-        "faceted": false,
-        "wildcarded": false,
-        "facetOptions": ["item-order", "descending", "fragment-frequency", "limit=3"],
-        "value": [{ "type": "jsonPropertyIndex", "value": "updatedDateTime", "facet": true }]
-      },
-      {
-        "name": "FirstName",
-        "type": "constraints/values",
-        "faceted": false,
-        "wildcarded": true,
-        "facetOptions": ["item-order", "ascending", "fragment-frequency", "limit=3"],
-        "value": { "type": "pathIndex", "value": "//Name/firstName", "facet": true }
-      },
-      {
-        "name": "Race",
-        "type": "constraints/values",
-        "faceted": true,
-        "wildcarded": false,
-        "facetOptions": ["frequency-order", "descending", "fragment-frequency", "limit=10"],
-        "value": [{ "type": "jsonPropertyIndex", "value": "race" }]
-      },
-      {
-        "name": "Gender",
-        "type": "constraints/values",
-        "faceted": true,
-        "wildcarded": false,
-        "scope": {
-          "property": "Gender",
-          "value": [
-            { "type": "jsonPropertyIndex", "value": "genderCode" },
-            { "type": "jsonPropertyIndex", "value": "gender", "facet": true }
-          ]
+        {
+            "name": "Collection",
+            "type": "constraints/collection",
+            "faceted": true,
+            "wildcarded": false,
+            "facetOptions": ["frequency-order", "descending", "fragment-frequency", "limit=20"]
+        },
+        {
+            "name": "BirthDate",
+            "type": "constraints/values",
+            "faceted": false,
+            "wildcarded": true,
+            "facetOptions": ["item-order", "descending", "fragment-frequency", "limit=3"],
+            "value": [{ "type": "jsonPropertyIndex", "value": "birthDate", "facet": true }]
+        },
+        {
+            "name": "Updated",
+            "type": "constraints/values",
+            "faceted": false,
+            "wildcarded": false,
+            "facetOptions": ["item-order", "descending", "fragment-frequency", "limit=3"],
+            "value": [{ "type": "jsonPropertyIndex", "value": "updatedDateTime", "facet": true }]
+        },
+        {
+            "name": "FirstName",
+            "type": "constraints/values",
+            "faceted": false,
+            "wildcarded": true,
+            "facetOptions": ["item-order", "ascending", "fragment-frequency", "limit=3"],
+            "value": { "type": "pathIndex", "value": "//Name/firstName", "facet": true }
+        },
+        {
+            "name": "Race",
+            "type": "constraints/values",
+            "faceted": true,
+            "wildcarded": false,
+            "facetOptions": ["frequency-order", "descending", "fragment-frequency", "limit=10"],
+            "value": [{ "type": "jsonPropertyIndex", "value": "race" }]
+        },
+        {
+            "name": "Gender",
+            "type": "constraints/values",
+            "faceted": true,
+            "wildcarded": false,
+            "scope": {
+                "property": "Gender",
+                "value": [
+                    { "type": "jsonPropertyIndex", "value": "genderCode" },
+                    { "type": "jsonPropertyIndex", "value": "gender", "facet": true }
+                ]
+            }
+        },
+        {
+            "name": "Quote",
+            "type": "constraints/values",
+            "wildcarded": true,
+            "value": [{ "type": "jsonProperty", "value": "favoriteQuote", "useWordQuery": true }]
         }
-      },
-      {
-        "name": "Quote",
-        "type": "constraints/values",
-        "wildcarded": true,
-        "value": [{ "type": "jsonProperty", "value": "favoriteQuote", "useWordQuery": true }]
-      }
     ],
     "dataDictionary": {
-      "document": "/search/data-dictionary/test.json"
+        "document": "/search/data-dictionary/test.json"
     },
     "returnQuery": true,
     "returnParsedQuery": true,
@@ -72,24 +72,24 @@
     "returnMetrics": true,
     "defaultSortOrder": "birthDate",
     "sortOrder": {
-      "birthDate": [
-        {
-          "type": "index",
-          "value": {
-            "type": "jsonPropertyIndex",
-            "value": "birthDate"
-          },
-          "direction": "descending"
-        },
-        { "type": "score", "direction": "descending" }
-      ],
-      "all": [
-        { "type": "score", "direction": "ascending" },
-        { "type": "document", "direction": "ascending" },
-        { "type": "confidence", "direction": "ascending" },
-        { "type": "fitness", "direction": "ascending" },
-        { "type": "quality", "direction": "ascending" },
-        { "type": "unordered" }
-      ]
+        "birthDate": [
+            {
+                "type": "index",
+                "value": {
+                    "type": "jsonPropertyIndex",
+                    "value": "birthDate"
+                },
+                "direction": "descending"
+            },
+            { "type": "score", "direction": "descending" }
+        ],
+        "all": [
+            { "type": "score", "direction": "ascending" },
+            { "type": "document", "direction": "ascending" },
+            { "type": "confidence", "direction": "ascending" },
+            { "type": "fitness", "direction": "ascending" },
+            { "type": "quality", "direction": "ascending" },
+            { "type": "unordered" }
+        ]
     }
-  }
+}

@@ -18,5 +18,5 @@ class DocumentDataDictionary extends DataDictionary {
 
 module.exports = {
     DataDictionary,
-    DocumentDataDictionary
+    DocumentDataDictionary,
 };

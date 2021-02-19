@@ -1,13 +1,13 @@
 const dictionary = {
-    "$.Gender.genderCode": {
-        description: "Code for the gender of the person."
+    '$.Gender.genderCode': {
+        description: 'Code for the gender of the person.',
     },
-    "$.Name.firstName": {
-        description: "First Name"
+    '$.Name.firstName': {
+        description: 'First Name',
     },
-    "$.favoriteQuote": {
-        description: "Favorite quotation."
-    }
+    '$.favoriteQuote': {
+        description: 'Favorite quotation.',
+    },
 };
 
 function dictionaryLookup({ path }) {

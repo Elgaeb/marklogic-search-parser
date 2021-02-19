@@ -1,12 +1,48 @@
 plugins {
-  id "net.saliman.properties" version "1.5.1"
-  id "com.marklogic.ml-gradle" version "4.1.1"
+	id "java"
+	id "groovy"
+
+	id "net.saliman.properties" version "1.5.1"
+	id "com.marklogic.ml-gradle" version "4.1.1"
+	id "com.diffplug.spotless" version "5.10.2"
 }
 
 repositories {
-  jcenter()
+	jcenter()
 }
 
 dependencies {
-  mlBundle "com.marklogic:marklogic-unit-test-modules:1.0.beta"
+	mlBundle "com.marklogic:marklogic-unit-test-modules:1.0.beta"
+}
+
+spotless {
+	groovy {
+		target '*.groovy'
+		importOrder() // standard import order
+		greclipse()
+	}
+	groovyGradle {
+		target '*.gradle' // default target of groovyGradle
+		greclipse()
+	}
+	format 'styling', {
+		// you have to set the target manually
+		target project.fileTree(project.rootDir) {
+			include "src/*/ml-modules/**/*.?js"
+			include "src/*/ml-modules/**/*.js"
+			include "src/*/ml-modules/**/*.json"
+			include "src/*/ml-data/**/*.json"
+
+			// exclude 3rd party libraries and generated files
+			exclude "src/main/ml-modules/root/search/grammar.js"
+			exclude "src/main/ml-modules/root/search/jsonpath.js"
+			exclude "src/main/ml-modules/root/search/luxon.js"
+			exclude "src/main/ml-modules/root/search/moo.js"
+			exclude "src/main/ml-modules/root/search/nearley.js"
+			exclude "src/main/ml-modules/root/search/underscore.js"
+		}
+
+		// you can also slurp from a file or even provide both (inline always takes precedence over file)
+		prettier('2.2.1').configFile('.prettierrc.json')
+	}
 }

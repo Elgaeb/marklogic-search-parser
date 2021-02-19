@@ -1,49 +1,45 @@
 const DEFAULT_SEARCH_OPTIONS = {
-    "constraints": [
+    constraints: [
         {
-            "name": "Collection",
-            "type": "constraints/collection",
-            "faceted": true,
-            "wildcarded": false,
-            "facetOptions": [
-                "frequency-order",
-                "fragment-frequency",
-                "descending"
-            ]
-        }
+            name: 'Collection',
+            type: 'constraints/collection',
+            faceted: true,
+            wildcarded: false,
+            facetOptions: ['frequency-order', 'fragment-frequency', 'descending'],
+        },
     ],
-    "returnQuery": true,
-    "returnCtsQuery": false,
-    "returnResults": true,
-    "returnMatches": true,
-    "returnFacets": true,
-    "returnOptions": true,
-    "defaultSortOrder": "score",
-    "sortOrder": {
-        "score": [
+    returnQuery: true,
+    returnCtsQuery: false,
+    returnResults: true,
+    returnMatches: true,
+    returnFacets: true,
+    returnOptions: true,
+    defaultSortOrder: 'score',
+    sortOrder: {
+        score: [
             {
-                "type": "score",
-                "direction": "descending"
-            }
-        ]
-    }
+                type: 'score',
+                direction: 'descending',
+            },
+        ],
+    },
 };
 
 class SearchOptions {
-    constructor({ directory = "/search/options" } = {}) {
+    constructor({ directory = '/search/options' } = {}) {
         this.directory = directory;
     }
 
     loadOptionsFromDocument({ name }) {
-        if(name != null) {
+        if (name != null) {
             let uri = this.directory;
-            if(!uri.endsWith('/')) {
+            if (!uri.endsWith('/')) {
                 uri += '/';
             }
-            uri += name + ".json";
+            uri += name + '.json';
 
             let doc = cts.doc(uri);
-            if(doc != null) {
+            if (doc != null) {
                 return doc.toObject();
             }
         }
@@ -53,5 +49,5 @@ class SearchOptions {
 }
 
 module.exports = {
-    SearchOptions
+    SearchOptions,
 };

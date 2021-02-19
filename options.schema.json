@@ -18,14 +18,14 @@
             "type": "object",
             "required": [ "type", "value" ],
             "properties": {
-                "type": { 
+                "type": {
                     "description": "The type of the value.",
                     "type": "string",
-                    "enum": [ 
-                        "jsonPropertyIndex", 
-                        "pathIndex", 
-                        "fieldIndex", 
-                        "jsonProperty" 
+                    "enum": [
+                        "jsonPropertyIndex",
+                        "pathIndex",
+                        "fieldIndex",
+                        "jsonProperty"
                     ]
                 },
                 "value": {
@@ -45,7 +45,18 @@
                         "properties": {
                             "facet": {
                                 "description": "Boolean indicating whether to return faceting information for this value.",
-                                "type": "boolean" 
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": { "properties": { "type": { "enum": [ "pathIndex", "fieldIndex" ] } } },
+                    "then": {
+                        "properties": {
+                            "propertyForDne": {
+                                "description": "The name of a JSON property to use when formulating a DNE query.",
+                                "type": "string"
                             }
                         }
                     }
@@ -128,7 +139,7 @@
                                     "default": false,
                                     "type": "boolean"
                                 },
-                                "facetOptions": { 
+                                "facetOptions": {
                                     "description": "Additional options to be passed to cts.values.",
                                     "type": "array",
                                     "items": { "type": "string" }
@@ -157,7 +168,7 @@
                                     "default": false,
                                     "type": "boolean"
                                 },
-                                "facetOptions": { 
+                                "facetOptions": {
                                     "description": "Additional options to be passed to cts.values.",
                                     "type": "array",
                                     "items": { "type": "string" }
@@ -183,21 +194,21 @@
                             "description": "The URI of a document in MarkLogic that contains the data dictionary.",
                             "type": "string"
                         }
-                    } 
+                    }
                 }
             ]
         },
         "returnQuery": {
             "description": "Boolean indicating whether or not to return the original string query with the results.",
             "default": false,
-            "type": "boolean" 
+            "type": "boolean"
         },
-        "returnParsedQuery": { 
+        "returnParsedQuery": {
             "description": "Boolean indicating whether or not to return the intermediate parsed query with the results.",
             "default": false,
             "type": "boolean"
         },
-        "returnCtsQuery": { 
+        "returnCtsQuery": {
             "description": "Boolean indicating whether or not to return the generated cts.query with the results.",
             "default": false,
             "type": "boolean"
@@ -252,7 +263,7 @@
                                 "unordered"
                             ]
                         },
-                        "direction": { 
+                        "direction": {
                             "description": "The direction applied to the sorting.",
                             "default": "ascending",
                             "type": "string",

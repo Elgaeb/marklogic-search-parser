@@ -16,7 +16,7 @@ function time({ metricsProperty = 'metrics', resultProperty = 'result', timedFun
     out[metricsProperty] = {
         start: start.toISO(),
         end: end.toISO(),
-        duration: Interval.fromDateTimes(start, end).toDuration(['minutes', 'seconds']).toISO()
+        duration: Interval.fromDateTimes(start, end).toDuration(['minutes', 'seconds']).toISO(),
     };
     out[resultProperty] = result;
 
@@ -30,7 +30,6 @@ class SearchService {
     }
 
     booleanOption({ propertyName, params, defaultValue }) {
-
         let value = defaultValue;
 
         if (params != null && params[propertyName] != null) {
@@ -39,17 +38,17 @@ class SearchService {
             value = this.options[propertyName];
         }
 
-        switch(typeof(value)) {
+        switch (typeof value) {
             case 'boolean':
                 return value;
             case 'number':
                 return value != 0;
             case 'string':
-                switch(value.toLowerCase()) {
-                    case "t":
-                    case "true":
-                    case "yes":
-                    case "1":
+                switch (value.toLowerCase()) {
+                    case 't':
+                    case 'true':
+                    case 'yes':
+                    case '1':
                         return true;
                     default:
                         return false;
@@ -60,7 +59,7 @@ class SearchService {
     }
 
     parseParams(params) {
-        const qtext = params.q || "";
+        const qtext = params.q || '';
         const collection = params.collection;
         const directory = params.directory;
         const start = asNumber({ value: params.start, defaultValue: 1 });
@@ -68,14 +67,46 @@ class SearchService {
         const orderName = params.sort;
         const reverse = !!params.reverse;
 
-        const returnQuery = this.booleanOption({ propertyName: 'returnQuery', params, defaultValue: false });
-        const returnParsedQuery = this.booleanOption({ propertyName: 'returnParsedQuery', params, defaultValue: false });
-        const returnCtsQuery = this.booleanOption({ propertyName: 'returnCtsQuery', params, defaultValue: false });
-        const returnResults = this.booleanOption({ propertyName: 'returnResults', params, defaultValue: true });
-        const returnMatches = this.booleanOption({ propertyName: 'returnMatches', params, defaultValue: true });
-        const returnFacets = this.booleanOption({ propertyName: 'returnFacets', params, defaultValue: true });
-        const returnOptions = this.booleanOption({ propertyName: 'returnOptions', params, defaultValue: false });
-        const returnMetrics = this.booleanOption({ propertyName: 'returnMetrics', params, defaultValue: false });
+        const returnQuery = this.booleanOption({
+            propertyName: 'returnQuery',
+            params,
+            defaultValue: false,
+        });
+        const returnParsedQuery = this.booleanOption({
+            propertyName: 'returnParsedQuery',
+            params,
+            defaultValue: false,
+        });
+        const returnCtsQuery = this.booleanOption({
+            propertyName: 'returnCtsQuery',
+            params,
+            defaultValue: false,
+        });
+        const returnResults = this.booleanOption({
+            propertyName: 'returnResults',
+            params,
+            defaultValue: true,
+        });
+        const returnMatches = this.booleanOption({
+            propertyName: 'returnMatches',
+            params,
+            defaultValue: true,
+        });
+        const returnFacets = this.booleanOption({
+            propertyName: 'returnFacets',
+            params,
+            defaultValue: true,
+        });
+        const returnOptions = this.booleanOption({
+            propertyName: 'returnOptions',
+            params,
+            defaultValue: false,
+        });
+        const returnMetrics = this.booleanOption({
+            propertyName: 'returnMetrics',
+            params,
+            defaultValue: false,
+        });
 
         return {
             qtext,
@@ -92,7 +123,7 @@ class SearchService {
             returnMatches,
             returnFacets,
             returnOptions,
-            returnMetrics
+            returnMetrics,
         };
     }
 
@@ -111,14 +142,14 @@ class SearchService {
         returnMatches,
         returnFacets,
         returnOptions,
-        returnMetrics
+        returnMetrics,
     }) {
         const serviceStart = DateTime.fromJSDate(new Date());
 
         const metrics = {};
         const results = {};
 
-        if(!!returnMetrics) {
+        if (!!returnMetrics) {
             results.metrics = metrics;
         }
 
@@ -127,14 +158,14 @@ class SearchService {
             resultProperty: 'parser',
             timedFunction: () => {
                 return new SearchParser({ options: this.options });
-            }
+            },
         });
 
         metrics.parserInstantiationDuration = parserInstantiationDuration;
 
         const { parseDuration } = time({
             metricsProperty: 'parseDuration',
-            timedFunction: () => parser.parse(qtext)
+            timedFunction: () => parser.parse(qtext),
         });
 
         metrics.parseDuration = parseDuration;
@@ -146,20 +177,25 @@ class SearchService {
         }
 
         if (directory != null) {
-            ctsQueries.push(cts.directoryQuery([].concat(...[collection]), "infinity"));
+            ctsQueries.push(cts.directoryQuery([].concat(...[collection]), 'infinity'));
         }
 
         const { searchDuration, searchResults } = time({
             metricsProperty: 'searchDuration',
             resultProperty: 'searchResults',
             timedFunction: () => {
-                const searchOptions = [].concat(...["faceted", parser.makeSortOrder({ options: this.options, orderName, reverse })]);
+                const searchOptions = [].concat(
+                    ...[
+                        'faceted',
+                        parser.makeSortOrder({ options: this.options, orderName, reverse }),
+                    ]
+                );
                 return fn.subsequence(
                     cts.search(cts.andQuery(ctsQueries), searchOptions),
                     start,
                     pageLength
                 );
-            }
+            },
         });
 
         metrics.searchDuration = searchDuration;
@@ -171,9 +207,9 @@ class SearchService {
                 timedFunction: () => {
                     return parser.doFacet({
                         options: this.options,
-                        query: parser.ctsQuery
+                        query: parser.ctsQuery,
                     });
-                }
+                },
             });
 
             metrics.facetDuration = facetDuration;
@@ -185,9 +221,9 @@ class SearchService {
             resultProperty: 'resultsArr',
             timedFunction: () => {
                 const resultsArr = [];
-                if(returnResults) {
+                if (returnResults) {
                     let index = 0;
-                    for(let doc of searchResults) {
+                    for (let doc of searchResults) {
                         index++;
                         const docResult = {
                             index,
@@ -196,8 +232,8 @@ class SearchService {
                             confidence: cts.confidence(doc),
                             fitness: cts.fitness(doc),
                             extracted: {
-                                content: [ doc ]
-                            }
+                                content: [doc],
+                            },
                         };
 
                         if (returnMatches) {
@@ -206,10 +242,10 @@ class SearchService {
                                 resultProperty: 'matches',
                                 timedFunction: () => {
                                     return parser.match({ parsedQuery: parser.parsedQuery, doc });
-                                }
+                                },
                             });
 
-                            if(!!returnMetrics) {
+                            if (!!returnMetrics) {
                                 docResult.metrics = { matchDuration };
                             }
                             docResult.matches = matches;
@@ -219,7 +255,7 @@ class SearchService {
                     }
                 }
                 return resultsArr;
-            }
+            },
         });
 
         metrics.resultsDuration = resultsDuration;
@@ -252,11 +288,12 @@ class SearchService {
         metrics.serviceDuration = {
             start: serviceStart.toISO(),
             end: serviceEnd.toISO(),
-            duration: Interval.fromDateTimes(serviceStart, serviceEnd).toDuration(['minutes', 'seconds']).toISO()
+            duration: Interval.fromDateTimes(serviceStart, serviceEnd)
+                .toDuration(['minutes', 'seconds'])
+                .toISO(),
         };
 
         return results;
-
     }
 }
 
