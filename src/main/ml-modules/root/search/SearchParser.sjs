@@ -1,5 +1,6 @@
 const nearley = require('nearley');
 const grammar = require('grammar');
+const Numeral = require('numeral/numeral');
 
 const { DataDictionary, DocumentDataDictionary } = require('DataDictionary.sjs');
 
@@ -36,27 +37,70 @@ class TypeConverter {
         }
     }
 
-    valueForWordQuery({ parsedQuery }) {
+    valueForWordQuery({ parsedQuery, valueOptions = { dataType: 'string' } }) {
         const { value } = parsedQuery;
         switch (value.dataType) {
+            case 'date': {
+                const when = DateTime.fromISO(value.value);
+
+                switch(valueOptions.dataType) {
+                    case "number":
+                        return when.toMillis();
+
+                    case "boolean":
+                        return undefined;
+
+                    case "string":
+                    default:
+                        return [
+                            when.toISODate(),
+                            when.toFormat('yyyy/LL/dd'),
+                            when.toFormat('L/d/yy'),
+                            when.toFormat('L/d/yyyy'),
+                            when.toFormat('LL/dd/yy'),
+                            when.toFormat('LL/dd/yyyy'),
+                        ];
+                }
+            }
+
+            case 'integer':
+            case 'decimal': {
+                switch(valueOptions.dataType) {
+                    case "number":
+                        return value.value;
+
+                    case "boolean":
+                        return value.value != 0;
+
+                    case "string":
+                    default:
+                        return "" + value.value;
+                }
+            }
+
             case 'phrase':
             case 'string':
-                return value.value;
-            case 'date':
-                const when = DateTime.fromISO(value.value);
-                return [
-                    when.toISODate(),
-                    when.toFormat('yyyy/LL/dd'),
-                    when.toFormat('L/d/yy'),
-                    when.toFormat('L/d/yyyy'),
-                    when.toFormat('LL/dd/yy'),
-                    when.toFormat('LL/dd/yyyy'),
-                ];
-            case 'integer':
-            case 'decimal':
-                return value.text;
-            default:
-                return '' + value.value;
+            default: {
+                const valueStr = "" + value.value;
+                switch(valueOptions.dataType) {
+                    case "number":
+                        const num = Numeral(valueStr);
+                        return num.value() == null
+                            ? /^(y|yes|t|true)$/i.test(valueStr.trim())
+                                ? 1
+                                : /^(n|no|f|false)$/i.test(valueStr.trim())
+                                    ? 0
+                                    : null
+                            : num.value();
+
+                    case "boolean":
+                        return /^(1|y|yes|t|true)$/i.test(valueStr.trim());
+
+                    case "string":
+                    default:
+                        return valueStr;
+                }
+            }
         }
     }
 
@@ -182,22 +226,29 @@ class TypeConverter {
                         ? cts.falseQuery()
                         : cts.rangeQuery(ref, rangeOperator, desiredValue);
 
-                case 'jsonProperty':
-                    const ctsOptions = [
-                        !!constraintConfig.wildcarded ? 'wildcarded' : 'unwildcarded',
-                    ];
+                case 'jsonProperty': {
+                    const ctsOptions = new Set();
+
+
+                    if(valueOptions.queryOptions != null) {
+                        [].concat(...[valueOptions.queryOptions]).forEach(option => ctsOptions.add(option));
+                    }
+
+                    if(constraintConfig.wildcarded != null) {
+                        const isWildcarded = !!constraintConfig.wildcarded && (valueOptions.dataType == null || valueOptions.dataType == 'string');
+                        ctsOptions.add(isWildcarded ? 'wildcarded' : 'unwildcarded');
+                    }
+
+                    const value = this.valueForWordQuery({ parsedQuery, valueOptions });
+                    if(value == null) {
+                        // the passed value couldn't be coerced
+                        return cts.falseQuery();
+                    }
 
                     return !!valueOptions.useWordQuery
-                        ? cts.jsonPropertyWordQuery(
-                              valueOptions.value,
-                              this.valueForWordQuery({ parsedQuery }),
-                              ctsOptions
-                          )
-                        : cts.jsonPropertyValueQuery(
-                              valueOptions.value,
-                              this.valueForWordQuery({ parsedQuery }),
-                              ctsOptions
-                          );
+                        ? cts.jsonPropertyWordQuery(valueOptions.value, value, [...ctsOptions])
+                        : cts.jsonPropertyValueQuery(valueOptions.value, value, [...ctsOptions]);
+                }
 
                 default:
                     return null;
@@ -589,10 +640,10 @@ class SearchParser {
             const constraint = this.getConstraint({ constraintConfig });
             switch (parsedQuery.operator) {
                 case 'DNE':
-                    return constraint.toCtsDne({ parsedQuery, constraintConfig });
+                    return constraint.toCtsDne({ constraintConfig });
 
                 default:
-                    return constrsaint.toCts({ parsedQuery, constraintConfig });
+                    return constraint.toCts({ parsedQuery, constraintConfig });
             }
         } else {
             switch (parsedQuery.operator) {

@@ -68,6 +68,23 @@
                             "useWordQuery": {
                                 "description": "Boolean indicating whether to use a cts.jsonPropertyWordQuery for this value. The default is to use a cts.jsonPropertyValueQuery.",
                                 "type": "boolean"
+                            },
+                            "dataType": {
+                                "description": "",
+                                "type": "string",
+                                "default": "string",
+                                "enum": [
+                                    "number",
+                                    "string",
+                                    "boolean"
+                                ]
+                            },
+                            "queryOptions": {
+                                "description": "Additional query options to pass to the word/value query. See https://docs.marklogic.com/cts.jsonPropertyWordQuery and https://docs.marklogic.com/cts.jsonPropertyValueQuery for available options.",
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
                             }
                         }
                     }
@@ -153,6 +170,16 @@
                                 "additionalQuery": {
                                     "description": "An additional query used to further constrain the results of this constraint. This should be a cts.query serialized into JSON.",
                                     "type": "object"
+                                },
+                                "dne": {
+                                    "description": "Whether to process values that do not exist. May be one of 'allow' (allow querying for missing values), 'include' (allow querying of and return count for in facets), or 'deny'. This will affect performance.",
+                                    "type": "string",
+                                    "default": "allow",
+                                    "enum": [
+                                        "allow",
+                                        "include",
+                                        "deny"
+                                    ]
                                 }
                             }
                         }

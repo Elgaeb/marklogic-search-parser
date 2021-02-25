@@ -8,15 +8,15 @@ function get(context, params) {
 }
 
 function post(context, params, input) {
-    // return zero or more document nodes
+    return get(context, params);
 }
 
 function put(context, params, input) {
-    // return at most one document node
+    fn.error(null, 'RESTAPI-SRVEXERR', Sequence.from([ 405, "Method Not Allowed" ]));
 }
 
 function deleteFunction(context, params) {
-    // return at most one document node
+    fn.error(null, 'RESTAPI-SRVEXERR', Sequence.from([ 405, "Method Not Allowed" ]));
 }
 
 exports.GET = get;

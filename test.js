@@ -80,7 +80,7 @@ function writeResults(writeStream, results) {
 // const searchString = "12/12/90 'this is a test' word 123 .12 123.45";
 // const searchString = "Quote IS 'lorem' Quote GT 5/3/98";
 // const searchString = "Updated:2020-01-01";
-const searchString = "Updated:2020-01-01 OR FirstName DNE (John OR Emily)";
+const searchString = "Updated:2020-01-01 OR Age:48 OR Leopard:true FirstName DNE (John OR Emily)";
 
 const grammar = compileGrammar({
     grammar: fs.readFileSync('./search.ne', 'utf8'),

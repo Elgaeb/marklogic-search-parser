@@ -180,6 +180,8 @@ class SearchService {
             ctsQueries.push(cts.directoryQuery([].concat(...[collection]), 'infinity'));
         }
 
+        const finalQuery = cts.andQuery(ctsQueries);
+
         const { searchDuration, searchResults } = time({
             metricsProperty: 'searchDuration',
             resultProperty: 'searchResults',
@@ -191,7 +193,7 @@ class SearchService {
                     ]
                 );
                 return fn.subsequence(
-                    cts.search(cts.andQuery(ctsQueries), searchOptions),
+                    cts.search(finalQuery, searchOptions),
                     start,
                     pageLength
                 );
@@ -260,7 +262,7 @@ class SearchService {
 
         metrics.resultsDuration = resultsDuration;
 
-        results.total = cts.estimate(cts.andQuery(ctsQueries));
+        results.total = cts.estimate(finalQuery);
         results.start = start;
         results['page-length'] = pageLength;
         results.count = resultsArr.length;

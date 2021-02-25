@@ -1,4 +1,5 @@
 const { Constraint } = require('../Constraint');
+const { DateTime, Interval, Duration } = require('../luxon');
 
 class CodeValueConstraint extends Constraint {
     constructor({ options, matcher, parser, typeConverter, constraintConfig, dataDictionary }) {
@@ -56,16 +57,15 @@ class CodeValueConstraint extends Constraint {
     }
 
     makeCtsQueryForPropertyScope({
-        parsedQuery,
         constraintConfig,
         valueOptions,
         query = cts.trueQuery(),
     }) {
-        const getInnerQuery = ({ parsedQuery, valueOptions, constraintConfig, query }) => {
+        const getInnerQuery = ({ valueOptions, constraintConfig, query }) => {
             switch (valueOptions.type) {
                 case 'pathIndex':
                 case 'fieldIndex':
-                    return cts.jsonPropertyScopeQuery(valueOptions.propertyForDne, query);
+                    return valueOptions.propertyForDne == null ? null : cts.jsonPropertyScopeQuery(valueOptions.propertyForDne, query);
 
                 case 'jsonPropertyIndex':
                 case 'jsonProperty':
@@ -76,39 +76,37 @@ class CodeValueConstraint extends Constraint {
             }
         };
 
-        return getInnerQuery({ parsedQuery, valueOptions, constraintConfig, query });
+        return getInnerQuery({ valueOptions, constraintConfig, query });
     }
 
-    scopeToCtsExists({ parsedQuery, scopeOptions }) {
+    scopeToCtsExists({ scopeOptions }) {
         const { property, value, scope } = scopeOptions;
 
         const subQuery = this.toExistsSubQuery({
-            parsedQuery,
             valueOptions: value,
             scopeOptions: scope,
         });
         return cts.jsonPropertyScopeQuery(property, subQuery);
     }
 
-    valueToCtsExists({ parsedQuery, valueOptions }) {
+    valueToCtsExists({  valueOptions }) {
         return this.makeCtsQueryForPropertyScope({
-            parsedQuery,
             constraintConfig: this.constraintConfig,
             valueOptions,
         });
     }
 
-    toExistsSubQuery({ parsedQuery, valueOptions = null, scopeOptions = null }) {
+    toExistsSubQuery({ valueOptions = null, scopeOptions = null }) {
         const valueQueries = []
             .concat(...[valueOptions])
             .filter((v) => v != null)
-            .map((valueOptions) => this.valueToCtsExists({ parsedQuery, valueOptions }))
+            .map((valueOptions) => this.valueToCtsExists({ valueOptions }))
             .filter((v) => v != null);
 
         const scopeQueries = []
             .concat(...[scopeOptions])
             .filter((v) => v != null)
-            .map((scopeOptions) => this.scopeToCtsExists({ parsedQuery, scopeOptions }))
+            .map((scopeOptions) => this.scopeToCtsExists({ scopeOptions }))
             .filter((v) => v != null);
 
         const queries = [...valueQueries, ...scopeQueries];
@@ -122,9 +120,8 @@ class CodeValueConstraint extends Constraint {
         }
     }
 
-    toCtsDne({ parsedQuery }) {
+    toCtsDne({  }) {
         const ctsQuery = this.toExistsSubQuery({
-            parsedQuery,
             valueOptions: this.constraintConfig.value,
             scopeOptions: this.constraintConfig.scope,
         });
@@ -227,13 +224,49 @@ class CodeValueConstraint extends Constraint {
                         name: name,
                         count: cts.frequency(value),
                     };
+
                     out.push(newValue);
                     outHash[name] = newValue;
                 }
             }
         });
 
-        return out;
+        const facetValue =  {
+            name: this.constraintConfig.name,
+            values: out
+        };
+
+        if(this.constraintConfig.dne === 'include') {
+            facetValue.dne = this.facetDne({ query });
+        }
+
+        return facetValue;
+    }
+
+    facetDne({ query }) {
+        const start = DateTime.fromJSDate(new Date());
+
+        const dneQuery = this.toCtsDne({  });
+        const outDneQuery = cts.andQuery([].concat(...[ query, dneQuery ]).filter(v => v != null));
+        const dneCount = cts.estimate(outDneQuery);
+
+        const end = DateTime.fromJSDate(new Date());
+
+        const dne = {
+            count: dneCount
+        };
+
+        if(this.options.returnMetrics) {
+            dne.metrics = {
+                start: start.toISO(),
+                end: end.toISO(),
+                duration: Interval.fromDateTimes(start, end)
+                    .toDuration(['minutes', 'seconds'])
+                    .toISO(),
+            };
+        }
+
+        return dne;
     }
 
     generateMatches({ doc, parsedQuery, constraintConfig }) {
