@@ -1,11 +1,34 @@
 const nearley = require('nearley');
 const grammar = require('grammar');
 const Numeral = require('numeral/numeral');
+const Mutator = require("Mutator");
 
 const { DataDictionary, DocumentDataDictionary } = require('DataDictionary.sjs');
 
 const { DateTime } = require('/search/luxon');
 const _ = require('underscore');
+
+const NOT_NULL_FILTER = v => v != null;
+
+class MutatorCache {
+    constructor() {
+        this.defaultMutator = Mutator;
+        this.mutators = {};
+    }
+
+    getMutator({ modulePath }) {
+        if(modulePath == null) {
+            return new this.defaultMutator();
+        } else {
+            if(this.mutators[modulePath] == null) {
+                this.mutators[modulePath] = require(modulePath);
+            }
+
+            const MutatorClass = this.mutators[modulePath];
+            return new MutatorClass();
+        }
+    }
+}
 
 class TypeConverter {
     constructor({ options }) {
@@ -19,6 +42,7 @@ class TypeConverter {
         };
 
         this.options = options;
+        this.mutators = new MutatorCache();
     }
 
     makeReference({ valueOptions }) {
@@ -209,18 +233,28 @@ class TypeConverter {
     }
 
     makeCtsQuery({ parsedQuery, constraintConfig, valueOptions }) {
+        const mutator = this.mutators.getMutator({ modulePath: valueOptions.inputMutator });
+
         const getInnerQuery = ({ parsedQuery, valueOptions, constraintConfig }) => {
+
+            // const inputValues = [].concat(...[ parsedQuery.value.value ])
+            //     .filter(NOT_NULL_FILTER)
+            //     .map(mutator)
+            //     .filter(NOT_NULL_FILTER);
+
             switch (valueOptions.type) {
                 case 'pathIndex':
                 case 'jsonPropertyIndex':
                 case 'fieldIndex':
+                    // TODO?: Should we change wildcared on range queries to require the use of a mutator?
+
                     const rangeOperator = this.rangeOperators[parsedQuery.operator];
                     const ref = this.makeReference({ valueOptions });
-                    const desiredValue =
-                        !constraintConfig.wildcarded ||
-                        !this.referenceCanBeWildcarded({ ref, operator: parsedQuery.operator })
-                            ? this.valueForReferenceQuery({ parsedQuery, ref })
-                            : cts.valueMatch(ref, '' + parsedQuery.value.value);
+                    const desiredValue = (
+                        !constraintConfig.wildcarded || !this.referenceCanBeWildcarded({ ref, operator: parsedQuery.operator })
+                            ? [ this.valueForReferenceQuery({ parsedQuery, ref }) ].filter(NOT_NULL_FILTER)
+                            : cts.valueMatch(ref, parsedQuery.value.value).toArray()
+                    ).map(value => mutator.mutate(value));
 
                     return desiredValue == null
                         ? cts.falseQuery()
@@ -239,8 +273,17 @@ class TypeConverter {
                         ctsOptions.add(isWildcarded ? 'wildcarded' : 'unwildcarded');
                     }
 
-                    const value = this.valueForWordQuery({ parsedQuery, valueOptions });
-                    if(value == null) {
+                    const values = [].concat(...[ this.valueForWordQuery({ parsedQuery, valueOptions }) ])
+                        .filter(NOT_NULL_FILTER)
+                        .map(value => [].concat( ...[ mutator.mutate(value) ] ))
+                        .filter(NOT_NULL_FILTER);
+
+                    const valueSet = new Set();
+                    values.forEach(v => v.forEach(vv => valueSet.add(vv)));
+
+                    const value = [ ...valueSet ];
+
+                    if(value.length === 0) {
                         // the passed value couldn't be coerced
                         return cts.falseQuery();
                     }
@@ -489,9 +532,6 @@ class SearchParser {
 
             case 'CONSTRAINT':
                 return this.constraintToCts({ parsedQuery });
-
-            case 'DNE':
-                return this.constraintToCtsDne({ parsedQuery });
 
             default:
                 break;
