@@ -206,6 +206,21 @@ function __contains(scope, expression) {
   }
 }
 
+function __not(not, expression) {
+  const name = not.value;
+
+  const offset = not.offset;
+  const length = expression.input.length + expression.input.offset - offset;
+  return {
+    type: 'NOT',
+    children: [].concat(...[expression]),
+    input: {
+      offset,
+      length
+    }
+  }
+}
+
 function __constraint(wx, operator, nx) {
   const name = wx.value;
   const value = nx.value; //nx.text != null ? nx.text : nx.value;
@@ -256,10 +271,12 @@ and_expression -> group_expression {% head %}
 
 group_expression -> %lparen expression %rparen {% ([lp, ex, rp]) => ex %}
 group_expression -> contains_expression {% head %}
+group_expression -> not_expression {% head %}
+group_expression -> terminal_expression {% head %}
 
 contains_expression -> %word %kw_contains group_expression {% ([wx, cx, ex]) => __contains(wx, ex) %}
-contains_expression -> terminal_expression {% head %}
 
+not_expression -> %kw_not group_expression {% ([not, expression]) => __not(not, expression) %}
 
 terminal_expression -> value_terminal {% head %}
 terminal_expression -> constraint_terminal {% head %}
