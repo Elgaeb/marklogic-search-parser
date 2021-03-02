@@ -237,10 +237,7 @@ class TypeConverter {
 
         const getInnerQuery = ({ parsedQuery, valueOptions, constraintConfig }) => {
 
-            // const inputValues = [].concat(...[ parsedQuery.value.value ])
-            //     .filter(NOT_NULL_FILTER)
-            //     .map(mutator)
-            //     .filter(NOT_NULL_FILTER);
+            const weight = valueOptions.weight == null ? 1.0 : Numeral(valueOptions.weight).value();
 
             switch (valueOptions.type) {
                 case 'pathIndex':
@@ -258,7 +255,7 @@ class TypeConverter {
 
                     return desiredValue == null
                         ? cts.falseQuery()
-                        : cts.rangeQuery(ref, rangeOperator, desiredValue);
+                        : cts.rangeQuery(ref, rangeOperator, desiredValue, [], weight);
 
                 case 'jsonProperty': {
                     const ctsOptions = new Set();
@@ -289,8 +286,8 @@ class TypeConverter {
                     }
 
                     return !!valueOptions.useWordQuery
-                        ? cts.jsonPropertyWordQuery(valueOptions.value, value, [...ctsOptions])
-                        : cts.jsonPropertyValueQuery(valueOptions.value, value, [...ctsOptions]);
+                        ? cts.jsonPropertyWordQuery(valueOptions.value, value, [...ctsOptions], weight)
+                        : cts.jsonPropertyValueQuery(valueOptions.value, value, [...ctsOptions], weight);
                 }
 
                 default:
