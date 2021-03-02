@@ -285,9 +285,14 @@ class TypeConverter {
                         return cts.falseQuery();
                     }
 
-                    return !!valueOptions.useWordQuery
-                        ? cts.jsonPropertyWordQuery(valueOptions.value, value, [...ctsOptions], weight)
-                        : cts.jsonPropertyValueQuery(valueOptions.value, value, [...ctsOptions], weight);
+                    const ctsFn = !!valueOptions.useWordQuery
+                        ? cts.jsonPropertyWordQuery
+                        : cts.jsonPropertyValueQuery;
+
+                    // cts.walk has an issue when passed a jsonPropertyValueQuery with multiple values
+                    return value.length === 1
+                        ? ctsFn(valueOptions.value, value, [...ctsOptions], weight)
+                        : cts.orQuery(value.map(v => ctsFn(valueOptions.value, v, [...ctsOptions], weight)));
                 }
 
                 default:
