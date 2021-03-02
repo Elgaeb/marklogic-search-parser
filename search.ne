@@ -78,20 +78,40 @@ lexer.next = (next => () => {
 
 
 function head(arr) {
-  return arr[0];
+  return Array.isArray(arr) ? arr[0] : arr;
 }
 
-function __or(ox, ax) {
+function tail(arr) {
+  return Array.isArray(arr) ? arr[arr.length - 1] : arr;
+}
+
+
+function __or(left, right) {
+  const last = tail(right);
+  const offset = left.input.offset;
+  const length = last.input.length + last.input.offset - offset;
   return {
     type: 'OR',
-    children: [].concat(...[ox, ax])
+    children: [].concat(...[left, right]),
+    input: {
+        offset,
+        length
+    }
+
   };
 }
 
-function __and(ax, wx) {
+function __and(left, right) {
+  const last = tail(right);
+  const offset = left.input.offset;
+  const length = last.input.length + last.input.offset - offset;
   return {
     type: 'AND',
-    children: [].concat(...[ax, wx])
+    children: [].concat(...[left, right]),
+    input: {
+        offset,
+        length
+    }
   };
 }
 
@@ -170,6 +190,22 @@ function __phrase(wx) {
   }
 }
 
+function __contains(scope, expression) {
+  const name = scope.value;
+
+  const offset = scope.offset;
+  const length = expression.input.length + expression.input.offset - offset;
+  return {
+    type: 'SCOPE',
+    name: name,
+    children: [].concat(...[expression]),
+    input: {
+      offset,
+      length
+    }
+  }
+}
+
 function __constraint(wx, operator, nx) {
   const name = wx.value;
   const value = nx.value; //nx.text != null ? nx.text : nx.value;
@@ -219,7 +255,11 @@ and_expression -> and_expression %kw_and:? group_expression {% ([ax, op, wx]) =>
 and_expression -> group_expression {% head %}
 
 group_expression -> %lparen expression %rparen {% ([lp, ex, rp]) => ex %}
-group_expression -> terminal_expression {% head %}
+group_expression -> contains_expression {% head %}
+
+contains_expression -> %word %kw_contains group_expression {% ([wx, cx, ex]) => __contains(wx, ex) %}
+contains_expression -> terminal_expression {% head %}
+
 
 terminal_expression -> value_terminal {% head %}
 terminal_expression -> constraint_terminal {% head %}

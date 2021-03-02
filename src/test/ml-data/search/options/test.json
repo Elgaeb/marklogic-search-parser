@@ -59,6 +59,9 @@
             "value": [{ "type": "jsonProperty", "value": "favoriteQuote", "useWordQuery": true }]
         }
     ],
+    "containers": {
+        "Name": { "property": "Name" }
+    },
     "dataDictionary": {
         "document": "/search/data-dictionary/test.json"
     },

@@ -224,6 +224,35 @@
                 ]
             }
         },
+        "containers": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "object",
+                "oneOf": [
+                    {
+                        "additionalProperties": false,
+                        "required": [ "property" ],
+                        "properties": {
+                            "property": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    {
+                        "additionalProperties": false,
+                        "required": [ "element", "namespace" ],
+                        "properties": {
+                            "element": {
+                                "type": "string"
+                            },
+                            "namespace": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
         "dataDictionary": {
             "description": "Define a data dictionary that will be used to provide contextual information in matches.",
             "type": "object",
