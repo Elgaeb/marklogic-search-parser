@@ -25,7 +25,8 @@
                         "jsonPropertyIndex",
                         "pathIndex",
                         "fieldIndex",
-                        "jsonProperty"
+                        "jsonProperty",
+                        "field"
                     ]
                 },
                 "value": {
@@ -60,7 +61,7 @@
                     }
                 },
                 {
-                    "if": { "properties": { "type": { "enum": [ "pathIndex", "fieldIndex" ] } } },
+                    "if": { "properties": { "type": { "enum": [ "pathIndex", "fieldIndex", "field" ] } } },
                     "then": {
                         "properties": {
                             "propertyForDne": {
@@ -71,7 +72,7 @@
                     }
                 },
                 {
-                    "if": { "properties": { "type": { "const": "jsonProperty" } } },
+                    "if": { "properties": { "type": { "enum": [ "jsonProperty", "field" ] } } },
                     "then": {
                         "properties": {
                             "useWordQuery": {
@@ -124,6 +125,10 @@
                 "scope": {
                     "description": "An additional scope that child values must be nested within.",
                     "$ref": "#/definitions/scopes"
+                },
+                "additionalQuery": {
+                    "description": "An additional query used to further constrain the results of this constraint in this scope. This should be a cts.query serialized into JSON.",
+                    "type": "object"
                 }
             }
         }

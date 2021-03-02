@@ -242,7 +242,7 @@ class TypeConverter {
             switch (valueOptions.type) {
                 case 'pathIndex':
                 case 'jsonPropertyIndex':
-                case 'fieldIndex':
+                case 'fieldIndex': {
                     // TODO?: Should we change wildcared on range queries to require the use of a mutator?
 
                     const rangeOperator = this.rangeOperators[parsedQuery.operator];
@@ -256,8 +256,21 @@ class TypeConverter {
                     return desiredValue == null
                         ? cts.falseQuery()
                         : cts.rangeQuery(ref, rangeOperator, desiredValue, [], weight);
-
+                }
+                case 'field':
                 case 'jsonProperty': {
+                    function getCtsFn({ useWordQuery, type }) {
+                        if(type === 'field') {
+                            return !!useWordQuery
+                                ? cts.fieldWordQuery
+                                : cts.fieldValueQuery
+                        } else {
+                            return !!useWordQuery
+                                ? cts.jsonPropertyWordQuery
+                                : cts.jsonPropertyValueQuery;
+                        }
+                    }
+
                     const ctsOptions = new Set();
 
 
@@ -285,9 +298,10 @@ class TypeConverter {
                         return cts.falseQuery();
                     }
 
-                    const ctsFn = !!valueOptions.useWordQuery
-                        ? cts.jsonPropertyWordQuery
-                        : cts.jsonPropertyValueQuery;
+                    const ctsFn = getCtsFn({
+                        useWordQuery: valueOptions.useWordQuery,
+                        type: valueOptions.type
+                    });
 
                     // cts.walk has an issue when passed a jsonPropertyValueQuery with multiple values
                     return value.length === 1

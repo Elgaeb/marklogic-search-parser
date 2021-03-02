@@ -7,9 +7,16 @@ class CodeValueConstraint extends Constraint {
     }
 
     scopeToCts({ parsedQuery, scopeOptions }) {
-        const { property, value, scope } = scopeOptions;
+        const { property, value, scope, additionalQuery } = scopeOptions;
         const subQuery = this.toSubQuery({ parsedQuery, valueOptions: value, scopeOptions: scope });
-        return cts.jsonPropertyScopeQuery(property, subQuery);
+
+        const finalQuery = additionalQuery == null
+            ? subQuery
+            : cts.andQuery([
+                cts.query(additionalQuery),
+                subQuery
+            ]);
+        return cts.jsonPropertyScopeQuery(property, finalQuery);
     }
 
     valueToCts({ parsedQuery, valueOptions }) {
@@ -65,6 +72,7 @@ class CodeValueConstraint extends Constraint {
             switch (valueOptions.type) {
                 case 'pathIndex':
                 case 'fieldIndex':
+                case 'field':
                     return valueOptions.propertyForDne == null ? null : cts.jsonPropertyScopeQuery(valueOptions.propertyForDne, query);
 
                 case 'jsonPropertyIndex':
