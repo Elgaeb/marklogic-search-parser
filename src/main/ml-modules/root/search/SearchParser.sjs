@@ -1,14 +1,14 @@
 const nearley = require('nearley');
 const grammar = require('grammar');
 const Numeral = require('numeral/numeral');
-const Mutator = require("Mutator");
+const Mutator = require('Mutator');
 
 const { DataDictionary, DocumentDataDictionary } = require('DataDictionary.sjs');
 
 const { DateTime } = require('/search/luxon');
 const _ = require('underscore');
 
-const NOT_NULL_FILTER = v => v != null;
+const NOT_NULL_FILTER = (v) => v != null;
 
 class MutatorCache {
     constructor() {
@@ -17,10 +17,10 @@ class MutatorCache {
     }
 
     getMutator({ modulePath }) {
-        if(modulePath == null) {
+        if (modulePath == null) {
             return new this.defaultMutator();
         } else {
-            if(this.mutators[modulePath] == null) {
+            if (this.mutators[modulePath] == null) {
                 this.mutators[modulePath] = require(modulePath);
             }
 
@@ -67,14 +67,14 @@ class TypeConverter {
             case 'date': {
                 const when = DateTime.fromISO(value.value);
 
-                switch(valueOptions.dataType) {
-                    case "number":
+                switch (valueOptions.dataType) {
+                    case 'number':
                         return when.toMillis();
 
-                    case "boolean":
+                    case 'boolean':
                         return undefined;
 
-                    case "string":
+                    case 'string':
                     default:
                         return [
                             when.toISODate(),
@@ -89,38 +89,38 @@ class TypeConverter {
 
             case 'integer':
             case 'decimal': {
-                switch(valueOptions.dataType) {
-                    case "number":
+                switch (valueOptions.dataType) {
+                    case 'number':
                         return value.value;
 
-                    case "boolean":
+                    case 'boolean':
                         return value.value != 0;
 
-                    case "string":
+                    case 'string':
                     default:
-                        return "" + value.value;
+                        return '' + value.value;
                 }
             }
 
             case 'phrase':
             case 'string':
             default: {
-                const valueStr = "" + value.value;
-                switch(valueOptions.dataType) {
-                    case "number":
+                const valueStr = '' + value.value;
+                switch (valueOptions.dataType) {
+                    case 'number':
                         const num = Numeral(valueStr);
                         return num.value() == null
                             ? /^(y|yes|t|true)$/i.test(valueStr.trim())
                                 ? 1
                                 : /^(n|no|f|false)$/i.test(valueStr.trim())
-                                    ? 0
-                                    : null
+                                ? 0
+                                : null
                             : num.value();
 
-                    case "boolean":
+                    case 'boolean':
                         return /^(1|y|yes|t|true)$/i.test(valueStr.trim());
 
-                    case "string":
+                    case 'string':
                     default:
                         return valueStr;
                 }
@@ -236,7 +236,6 @@ class TypeConverter {
         const mutator = this.mutators.getMutator({ modulePath: valueOptions.inputMutator });
 
         const getInnerQuery = ({ parsedQuery, valueOptions, constraintConfig }) => {
-
             const weight = valueOptions.weight == null ? 1.0 : Numeral(valueOptions.weight).value();
 
             switch (valueOptions.type) {
@@ -247,11 +246,13 @@ class TypeConverter {
 
                     const rangeOperator = this.rangeOperators[parsedQuery.operator];
                     const ref = this.makeReference({ valueOptions });
-                    const desiredValue = (
-                        !constraintConfig.wildcarded || !this.referenceCanBeWildcarded({ ref, operator: parsedQuery.operator })
-                            ? [ this.valueForReferenceQuery({ parsedQuery, ref }) ].filter(NOT_NULL_FILTER)
-                            : cts.valueMatch(ref, parsedQuery.value.value).toArray()
-                    ).map(value => mutator.mutate(value));
+                    const desiredValue = (!constraintConfig.wildcarded ||
+                    !this.referenceCanBeWildcarded({ ref, operator: parsedQuery.operator })
+                        ? [this.valueForReferenceQuery({ parsedQuery, ref })].filter(
+                              NOT_NULL_FILTER
+                          )
+                        : cts.valueMatch(ref, parsedQuery.value.value).toArray()
+                    ).map((value) => mutator.mutate(value));
 
                     return desiredValue == null
                         ? cts.falseQuery()
@@ -260,10 +261,8 @@ class TypeConverter {
                 case 'field':
                 case 'jsonProperty': {
                     function getCtsFn({ useWordQuery, type }) {
-                        if(type === 'field') {
-                            return !!useWordQuery
-                                ? cts.fieldWordQuery
-                                : cts.fieldValueQuery
+                        if (type === 'field') {
+                            return !!useWordQuery ? cts.fieldWordQuery : cts.fieldValueQuery;
                         } else {
                             return !!useWordQuery
                                 ? cts.jsonPropertyWordQuery
@@ -273,40 +272,48 @@ class TypeConverter {
 
                     const ctsOptions = new Set();
 
-
-                    if(valueOptions.queryOptions != null) {
-                        [].concat(...[valueOptions.queryOptions]).forEach(option => ctsOptions.add(option));
+                    if (valueOptions.queryOptions != null) {
+                        []
+                            .concat(...[valueOptions.queryOptions])
+                            .forEach((option) => ctsOptions.add(option));
                     }
 
-                    if(constraintConfig.wildcarded != null) {
-                        const isWildcarded = !!constraintConfig.wildcarded && (valueOptions.dataType == null || valueOptions.dataType == 'string');
+                    if (constraintConfig.wildcarded != null) {
+                        const isWildcarded =
+                            !!constraintConfig.wildcarded &&
+                            (valueOptions.dataType == null || valueOptions.dataType == 'string');
                         ctsOptions.add(isWildcarded ? 'wildcarded' : 'unwildcarded');
                     }
 
-                    const values = [].concat(...[ this.valueForWordQuery({ parsedQuery, valueOptions }) ])
+                    const values = []
+                        .concat(...[this.valueForWordQuery({ parsedQuery, valueOptions })])
                         .filter(NOT_NULL_FILTER)
-                        .map(value => [].concat( ...[ mutator.mutate(value) ] ))
+                        .map((value) => [].concat(...[mutator.mutate(value)]))
                         .filter(NOT_NULL_FILTER);
 
                     const valueSet = new Set();
-                    values.forEach(v => v.forEach(vv => valueSet.add(vv)));
+                    values.forEach((v) => v.forEach((vv) => valueSet.add(vv)));
 
-                    const value = [ ...valueSet ];
+                    const value = [...valueSet];
 
-                    if(value.length === 0) {
+                    if (value.length === 0) {
                         // the passed value couldn't be coerced
                         return cts.falseQuery();
                     }
 
                     const ctsFn = getCtsFn({
                         useWordQuery: valueOptions.useWordQuery,
-                        type: valueOptions.type
+                        type: valueOptions.type,
                     });
 
                     // cts.walk has an issue when passed a jsonPropertyValueQuery with multiple values
                     return value.length === 1
                         ? ctsFn(valueOptions.value, value, [...ctsOptions], weight)
-                        : cts.orQuery(value.map(v => ctsFn(valueOptions.value, v, [...ctsOptions], weight)));
+                        : cts.orQuery(
+                              value.map((v) =>
+                                  ctsFn(valueOptions.value, v, [...ctsOptions], weight)
+                              )
+                          );
                 }
 
                 default:
@@ -518,6 +525,15 @@ class SearchParser {
         return this.parsedQuery;
     }
 
+    getScopePropertyForName({ name }) {
+        if (this.options.containers != null && this.options.containers[name] != null) {
+            const prop = this.options.containers[name].property;
+            return prop == null ? name : prop;
+        } else {
+            return name;
+        }
+    }
+
     /**
      * @private
      */
@@ -546,6 +562,15 @@ class SearchParser {
             case 'TRUE':
                 return cts.trueQuery();
 
+            case 'NOT':
+                return cts.notQuery(this.toCts({ parsedQuery: parsedQuery.subquery }));
+
+            case 'SCOPE':
+                return cts.jsonPropertyScopeQuery(
+                    this.getScopePropertyForName({ name: parsedQuery.name }),
+                    this.toCts({ parsedQuery: parsedQuery.subquery })
+                );
+
             case 'CONSTRAINT':
                 return this.constraintToCts({ parsedQuery });
 
@@ -562,6 +587,61 @@ class SearchParser {
             acc[c.name] = c;
             return acc;
         }, {});
+    }
+
+    /**
+     * @private
+     */
+    doMatch_old({ parsedQuery, doc }) {
+        const doChildMatch = ({ parsedQuery, doc, abortOnMiss }) => {
+            const matches = {
+                matched: true,
+                matches: [],
+            };
+
+            for (let cq of parsedQuery.children) {
+                const childMatch = this.doMatch({ parsedQuery: cq, doc });
+                if (childMatch.matched) {
+                    matches.matches = [].concat(...[matches.matches, childMatch.matches]);
+                } else if (abortOnMiss) {
+                    return { matched: false };
+                }
+            }
+
+            return matches;
+        };
+
+        switch (parsedQuery.type) {
+            case 'AND':
+                return doChildMatch({ parsedQuery, doc, abortOnMiss: true });
+
+            case 'OR':
+                return doChildMatch({ parsedQuery, doc, abortOnMiss: false });
+
+            case 'TRUE':
+                return {
+                    matched: true,
+                    matches: [],
+                };
+
+            case 'CONSTRAINT':
+                const constraintConfig = this.constraintMap[parsedQuery.name];
+                if (constraintConfig != null) {
+                    const constraint = this.getConstraint({
+                        constraintConfig,
+                        dataDictionary: this.dataDictionary,
+                    });
+                    return constraint.generateMatches({ doc, parsedQuery, constraintConfig });
+                }
+                return { matched: true, matches: [] };
+
+            default:
+                let query = this.toCts({ parsedQuery });
+                let matches = this.matcher.generateMatches({ doc, query, parsedQuery });
+                return matches != null && matches.length > 0
+                    ? { matched: true, matches }
+                    : { matched: false, matches: [] };
+        }
     }
 
     /**

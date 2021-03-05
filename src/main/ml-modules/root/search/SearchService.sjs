@@ -87,6 +87,11 @@ class SearchService {
             params,
             defaultValue: true,
         });
+        const returnContent = this.booleanOption({
+            propertyName: 'returnContent',
+            params,
+            defaultValue: true,
+        });
         const returnMatches = this.booleanOption({
             propertyName: 'returnMatches',
             params,
@@ -124,6 +129,7 @@ class SearchService {
             returnFacets,
             returnOptions,
             returnMetrics,
+            returnContent,
         };
     }
 
@@ -143,6 +149,7 @@ class SearchService {
         returnFacets,
         returnOptions,
         returnMetrics,
+        returnContent,
     }) {
         const serviceStart = DateTime.fromJSDate(new Date());
 
@@ -192,11 +199,7 @@ class SearchService {
                         parser.makeSortOrder({ options: this.options, orderName, reverse }),
                     ]
                 );
-                return fn.subsequence(
-                    cts.search(finalQuery, searchOptions),
-                    start,
-                    pageLength
-                );
+                return fn.subsequence(cts.search(finalQuery, searchOptions), start, pageLength);
             },
         });
 
@@ -233,10 +236,11 @@ class SearchService {
                             score: cts.score(doc),
                             confidence: cts.confidence(doc),
                             fitness: cts.fitness(doc),
-                            extracted: {
-                                content: [doc],
-                            },
                         };
+
+                        if(returnContent) {
+                            docResult.content = doc;
+                        }
 
                         if (returnMatches) {
                             const { matchDuration, matches } = time({

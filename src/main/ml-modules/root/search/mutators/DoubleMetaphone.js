@@ -2,9 +2,10 @@ const Mutator = require('../Mutator');
 
 class DoubleMetaphoneMutator extends Mutator {
     mutate(value) {
-        return spell.doubleMetaphone(value)
+        return spell
+            .doubleMetaphone(value)
             .toArray()
-            .filter(v => v != null && v.trim() !== '');
+            .filter((v) => v != null && v.trim() !== '');
     }
 }
 

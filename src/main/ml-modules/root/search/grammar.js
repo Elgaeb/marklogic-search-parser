@@ -82,20 +82,40 @@ lexer.next = (next => () => {
 
 
 function head(arr) {
-  return arr[0];
+  return Array.isArray(arr) ? arr[0] : arr;
 }
 
-function __or(ox, ax) {
+function tail(arr) {
+  return Array.isArray(arr) ? arr[arr.length - 1] : arr;
+}
+
+
+function __or(left, right) {
+  const last = tail(right);
+  const offset = left.input.offset;
+  const length = last.input.length + last.input.offset - offset;
   return {
     type: 'OR',
-    children: [].concat(...[ox, ax])
+    children: [].concat(...[left, right]),
+    input: {
+        offset,
+        length
+    }
+
   };
 }
 
-function __and(ax, wx) {
+function __and(left, right) {
+  const last = tail(right);
+  const offset = left.input.offset;
+  const length = last.input.length + last.input.offset - offset;
   return {
     type: 'AND',
-    children: [].concat(...[ax, wx])
+    children: [].concat(...[left, right]),
+    input: {
+        offset,
+        length
+    }
   };
 }
 
@@ -174,6 +194,37 @@ function __phrase(wx) {
   }
 }
 
+function __contains(scope, expression) {
+  const name = scope.value;
+
+  const offset = scope.offset;
+  const length = expression.input.length + expression.input.offset - offset;
+  return {
+    type: 'SCOPE',
+    name: name,
+    subquery: expression,
+    input: {
+      offset,
+      length
+    }
+  }
+}
+
+function __not(not, expression) {
+  const name = not.value;
+
+  const offset = not.offset;
+  const length = expression.input.length + expression.input.offset - offset;
+  return {
+    type: 'NOT',
+    subquery: expression,
+    input: {
+      offset,
+      length
+    }
+  }
+}
+
 function __constraint(wx, operator, nx) {
   const name = wx.value;
   const value = nx.value; //nx.text != null ? nx.text : nx.value;
@@ -219,7 +270,11 @@ var grammar = {
     {"name": "and_expression", "symbols": ["and_expression", "and_expression$ebnf$1", "group_expression"], "postprocess": ([ax, op, wx]) => __and(ax, wx)},
     {"name": "and_expression", "symbols": ["group_expression"], "postprocess": head},
     {"name": "group_expression", "symbols": [(lexer.has("lparen") ? {type: "lparen"} : lparen), "expression", (lexer.has("rparen") ? {type: "rparen"} : rparen)], "postprocess": ([lp, ex, rp]) => ex},
+    {"name": "group_expression", "symbols": ["contains_expression"], "postprocess": head},
+    {"name": "group_expression", "symbols": ["not_expression"], "postprocess": head},
     {"name": "group_expression", "symbols": ["terminal_expression"], "postprocess": head},
+    {"name": "contains_expression", "symbols": [(lexer.has("word") ? {type: "word"} : word), (lexer.has("kw_contains") ? {type: "kw_contains"} : kw_contains), "group_expression"], "postprocess": ([wx, cx, ex]) => __contains(wx, ex)},
+    {"name": "not_expression", "symbols": [(lexer.has("kw_not") ? {type: "kw_not"} : kw_not), "group_expression"], "postprocess": ([not, expression]) => __not(not, expression)},
     {"name": "terminal_expression", "symbols": ["value_terminal"], "postprocess": head},
     {"name": "terminal_expression", "symbols": ["constraint_terminal"], "postprocess": head},
     {"name": "value_terminal", "symbols": [(lexer.has("word") ? {type: "word"} : word)], "postprocess": ([wx]) => __word(wx)},

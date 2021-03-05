@@ -54,8 +54,6 @@ const lexer = moo.compile({
         "kw_or": "OR",
         "kw_not": "NOT",
         "kw_not_in": "NOT_IN",
-        "kw_from": "FROM",
-        "kw_to": "TO",
         "kw_eq": "EQ",
         "kw_is": "IS",
         "kw_lt": "LT",
@@ -64,8 +62,6 @@ const lexer = moo.compile({
         "kw_ge": "GE",
         "kw_ne": "NE",
         "kw_dne": "DNE",
-        "kw_near": "NEAR",
-        "kw_boost": "BOOST",
         "kw_contains": "CONTAINS",
     })}
   });
@@ -198,7 +194,7 @@ function __contains(scope, expression) {
   return {
     type: 'SCOPE',
     name: name,
-    children: [].concat(...[expression]),
+    subquery: expression,
     input: {
       offset,
       length
@@ -213,7 +209,7 @@ function __not(not, expression) {
   const length = expression.input.length + expression.input.offset - offset;
   return {
     type: 'NOT',
-    children: [].concat(...[expression]),
+    subquery: expression,
     input: {
       offset,
       length

@@ -83,8 +83,10 @@ function writeResults(writeStream, results) {
 // const searchString = "Updated:2020-01-01 OR Age:48 OR Leopard:true FirstName DNE (John OR Emily)";
 // const searchString = "Furby AND (Name CONTAINS John OR Emile)";
 // const searchString = "Furby AND Name CONTAINS John OR Emile AND Ron";
-const searchString = "Furby AND Name CONTAINS LastName CONTAINS John OR Emile";
+// const searchString = "Furby AND Name CONTAINS NOT LastName CONTAINS John OR Emile";
 // const searchString = "Bill AND John OR Emile OR Fred";
+// const searchString = "NOT Name CONTAINS (Bill OR John OR Emile OR Fred)";
+const searchString = "Something CONTAINS foo"
 
 const grammar = compileGrammar({
     grammar: fs.readFileSync('./search.ne', 'utf8'),

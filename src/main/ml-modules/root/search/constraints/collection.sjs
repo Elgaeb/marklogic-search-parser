@@ -17,7 +17,7 @@ class CollectionConstraint extends Constraint {
         return cts.collectionQuery(desiredValue);
     }
 
-    toCtsDne({  }) {
+    toCtsDne({}) {
         return cts.falseQuery();
     }
 

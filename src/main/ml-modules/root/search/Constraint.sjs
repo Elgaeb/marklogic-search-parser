@@ -20,7 +20,7 @@ class Constraint {
         return cts.trueQuery();
     }
 
-    toCtsDne({  }) {
+    toCtsDne({}) {
         return cts.falseQuery();
     }
 

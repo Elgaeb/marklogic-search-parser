@@ -12,11 +12,11 @@ function post(context, params, input) {
 }
 
 function put(context, params, input) {
-    fn.error(null, 'RESTAPI-SRVEXERR', Sequence.from([ 405, "Method Not Allowed" ]));
+    fn.error(null, 'RESTAPI-SRVEXERR', Sequence.from([405, 'Method Not Allowed']));
 }
 
 function deleteFunction(context, params) {
-    fn.error(null, 'RESTAPI-SRVEXERR', Sequence.from([ 405, "Method Not Allowed" ]));
+    fn.error(null, 'RESTAPI-SRVEXERR', Sequence.from([405, 'Method Not Allowed']));
 }
 
 exports.GET = get;

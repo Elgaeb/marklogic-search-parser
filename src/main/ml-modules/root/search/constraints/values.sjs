@@ -10,12 +10,10 @@ class CodeValueConstraint extends Constraint {
         const { property, value, scope, additionalQuery } = scopeOptions;
         const subQuery = this.toSubQuery({ parsedQuery, valueOptions: value, scopeOptions: scope });
 
-        const finalQuery = additionalQuery == null
-            ? subQuery
-            : cts.andQuery([
-                cts.query(additionalQuery),
-                subQuery
-            ]);
+        const finalQuery =
+            additionalQuery == null
+                ? subQuery
+                : cts.andQuery([cts.query(additionalQuery), subQuery]);
         return cts.jsonPropertyScopeQuery(property, finalQuery);
     }
 
@@ -63,17 +61,15 @@ class CodeValueConstraint extends Constraint {
         }
     }
 
-    makeCtsQueryForPropertyScope({
-        constraintConfig,
-        valueOptions,
-        query = cts.trueQuery(),
-    }) {
+    makeCtsQueryForPropertyScope({ constraintConfig, valueOptions, query = cts.trueQuery() }) {
         const getInnerQuery = ({ valueOptions, constraintConfig, query }) => {
             switch (valueOptions.type) {
                 case 'pathIndex':
                 case 'fieldIndex':
                 case 'field':
-                    return valueOptions.propertyForDne == null ? null : cts.jsonPropertyScopeQuery(valueOptions.propertyForDne, query);
+                    return valueOptions.propertyForDne == null
+                        ? null
+                        : cts.jsonPropertyScopeQuery(valueOptions.propertyForDne, query);
 
                 case 'jsonPropertyIndex':
                 case 'jsonProperty':
@@ -97,7 +93,7 @@ class CodeValueConstraint extends Constraint {
         return cts.jsonPropertyScopeQuery(property, subQuery);
     }
 
-    valueToCtsExists({  valueOptions }) {
+    valueToCtsExists({ valueOptions }) {
         return this.makeCtsQueryForPropertyScope({
             constraintConfig: this.constraintConfig,
             valueOptions,
@@ -128,7 +124,7 @@ class CodeValueConstraint extends Constraint {
         }
     }
 
-    toCtsDne({  }) {
+    toCtsDne({}) {
         const ctsQuery = this.toExistsSubQuery({
             valueOptions: this.constraintConfig.value,
             scopeOptions: this.constraintConfig.scope,
@@ -162,7 +158,8 @@ class CodeValueConstraint extends Constraint {
         const outValues = [];
 
         if (value != null) {
-            innerFacetValues({ valueOptions: value }).forEach((v) => outValues.push(v));
+            innerFacetValues({ valueOptions: value })
+                .forEach((v) => outValues.push(v));
         }
 
         if (scope != null) {
@@ -186,8 +183,8 @@ class CodeValueConstraint extends Constraint {
         if (references.length == 0) {
             references = this.facetValuesFor({
                 facetAllReferences: true,
-                valueOptions: this.constraintConfig.value,
-                scopeOptions: this.constraintConfig.scope,
+                value: this.constraintConfig.value,
+                scope: this.constraintConfig.scope,
             });
         }
 
@@ -239,12 +236,12 @@ class CodeValueConstraint extends Constraint {
             }
         });
 
-        const facetValue =  {
+        const facetValue = {
             name: this.constraintConfig.name,
-            values: out
+            values: out,
         };
 
-        if(this.constraintConfig.dne === 'include') {
+        if (this.constraintConfig.dne === 'include') {
             facetValue.dne = this.facetDne({ query });
         }
 
@@ -254,17 +251,17 @@ class CodeValueConstraint extends Constraint {
     facetDne({ query }) {
         const start = DateTime.fromJSDate(new Date());
 
-        const dneQuery = this.toCtsDne({  });
-        const outDneQuery = cts.andQuery([].concat(...[ query, dneQuery ]).filter(v => v != null));
+        const dneQuery = this.toCtsDne({});
+        const outDneQuery = cts.andQuery([].concat(...[query, dneQuery]).filter((v) => v != null));
         const dneCount = cts.estimate(outDneQuery);
 
         const end = DateTime.fromJSDate(new Date());
 
         const dne = {
-            count: dneCount
+            count: dneCount,
         };
 
-        if(this.options.returnMetrics) {
+        if (this.options.returnMetrics) {
             dne.metrics = {
                 start: start.toISO(),
                 end: end.toISO(),

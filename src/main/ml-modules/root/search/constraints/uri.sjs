@@ -9,13 +9,13 @@ class URIConstraint extends Constraint {
         const uri = parsedQuery.value.value;
 
         const uris = !this.constraintConfig.wildcarded
-            ? [ uri ]
-            : cts.valueMatch(cts.uriReference(), uri, [ ]);
+            ? [uri]
+            : cts.valueMatch(cts.uriReference(), uri, []);
 
         return cts.documentQuery(uris);
     }
 
-    toCtsDne({  }) {
+    toCtsDne({}) {
         return cts.falseQuery();
     }
 
@@ -23,10 +23,14 @@ class URIConstraint extends Constraint {
         const query = this.toCts({ parsedQuery });
         let matched = cts.contains(doc, query);
 
-        let matches = matched ? [{
-            type: 'uri',
-            'query-text': parsedQuery.input.text,
-        }] : [];
+        let matches = matched
+            ? [
+                  {
+                      type: 'uri',
+                      'query-text': parsedQuery.input.text,
+                  },
+              ]
+            : [];
 
         return { matched, matches };
     }
