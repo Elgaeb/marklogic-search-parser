@@ -62,6 +62,7 @@ const lexer = moo.compile({
         "kw_ge": "GE",
         "kw_ne": "NE",
         "kw_dne": "DNE",
+        "kw_option": "OPTION",
         "kw_contains": "CONTAINS",
     })}
   });
@@ -284,9 +285,19 @@ value_terminal -> %date {% ([wx]) => __date(wx) %}
 value_terminal -> %single_quoted_string {% ([wx]) => __phrase(wx) %}
 value_terminal -> %double_quoted_string {% ([wx]) => __phrase(wx) %}
 
-constraint_terminal -> %word equality_terminal value_terminal {% ([wx, cx, tx]) => __constraint(wx, 'EQ', tx) %}
-constraint_terminal -> %word range_terminal value_terminal {% ([wx, cx, tx]) => __constraint(wx, head(cx).value, tx) %}
+constraint_terminal -> %word equality_terminal value_terminal {% ([wx, cx, tx]) => __constraint(wx, 'EQ', tx, []) %}
+constraint_terminal -> %word range_terminal value_terminal {% ([wx, cx, tx]) => __constraint(wx, head(cx).value, tx, []) %}
 constraint_terminal -> %word dne_terminal {% ([wx, ox]) => __dne_constraint(wx, head(ox)) %}
+constraint_terminal -> constraint_terminal %kw_option option_terminal {% ([constraint, keyword, otherOptions ]) => {
+    let options = [...(constraint.options || []), ...otherOptions];
+    return {
+        ...constraint,
+        options
+    }
+} %}
+
+option_terminal -> (%word | %single_quoted_string | %double_quoted_string) {% ([option]) => option.map(op => op.value) %}
+# option_terminal -> option_terminal %kw_option (%word | %single_quoted_string | %double_quoted_string) {% ([options, keyword, option]) => [...options, option.value] %}
 
 range_terminal -> %kw_lt
 range_terminal -> %kw_le

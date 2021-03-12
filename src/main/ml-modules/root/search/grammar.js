@@ -58,8 +58,6 @@ const lexer = moo.compile({
         "kw_or": "OR",
         "kw_not": "NOT",
         "kw_not_in": "NOT_IN",
-        "kw_from": "FROM",
-        "kw_to": "TO",
         "kw_eq": "EQ",
         "kw_is": "IS",
         "kw_lt": "LT",
@@ -68,8 +66,7 @@ const lexer = moo.compile({
         "kw_ge": "GE",
         "kw_ne": "NE",
         "kw_dne": "DNE",
-        "kw_near": "NEAR",
-        "kw_boost": "BOOST",
+        "kw_option": "OPTION",
         "kw_contains": "CONTAINS",
     })}
   });
@@ -283,9 +280,20 @@ var grammar = {
     {"name": "value_terminal", "symbols": [(lexer.has("date") ? {type: "date"} : date)], "postprocess": ([wx]) => __date(wx)},
     {"name": "value_terminal", "symbols": [(lexer.has("single_quoted_string") ? {type: "single_quoted_string"} : single_quoted_string)], "postprocess": ([wx]) => __phrase(wx)},
     {"name": "value_terminal", "symbols": [(lexer.has("double_quoted_string") ? {type: "double_quoted_string"} : double_quoted_string)], "postprocess": ([wx]) => __phrase(wx)},
-    {"name": "constraint_terminal", "symbols": [(lexer.has("word") ? {type: "word"} : word), "equality_terminal", "value_terminal"], "postprocess": ([wx, cx, tx]) => __constraint(wx, 'EQ', tx)},
-    {"name": "constraint_terminal", "symbols": [(lexer.has("word") ? {type: "word"} : word), "range_terminal", "value_terminal"], "postprocess": ([wx, cx, tx]) => __constraint(wx, head(cx).value, tx)},
+    {"name": "constraint_terminal", "symbols": [(lexer.has("word") ? {type: "word"} : word), "equality_terminal", "value_terminal"], "postprocess": ([wx, cx, tx]) => __constraint(wx, 'EQ', tx, [])},
+    {"name": "constraint_terminal", "symbols": [(lexer.has("word") ? {type: "word"} : word), "range_terminal", "value_terminal"], "postprocess": ([wx, cx, tx]) => __constraint(wx, head(cx).value, tx, [])},
     {"name": "constraint_terminal", "symbols": [(lexer.has("word") ? {type: "word"} : word), "dne_terminal"], "postprocess": ([wx, ox]) => __dne_constraint(wx, head(ox))},
+    {"name": "constraint_terminal", "symbols": ["constraint_terminal", (lexer.has("kw_option") ? {type: "kw_option"} : kw_option), "option_terminal"], "postprocess":  ([constraint, keyword, otherOptions ]) => {
+            let options = [...(constraint.options || []), ...otherOptions];
+            return {
+                ...constraint,
+                options
+            }
+        } },
+    {"name": "option_terminal$subexpression$1", "symbols": [(lexer.has("word") ? {type: "word"} : word)]},
+    {"name": "option_terminal$subexpression$1", "symbols": [(lexer.has("single_quoted_string") ? {type: "single_quoted_string"} : single_quoted_string)]},
+    {"name": "option_terminal$subexpression$1", "symbols": [(lexer.has("double_quoted_string") ? {type: "double_quoted_string"} : double_quoted_string)]},
+    {"name": "option_terminal", "symbols": ["option_terminal$subexpression$1"], "postprocess": ([option]) => option.map(op => op.value)},
     {"name": "range_terminal", "symbols": [(lexer.has("kw_lt") ? {type: "kw_lt"} : kw_lt)]},
     {"name": "range_terminal", "symbols": [(lexer.has("kw_le") ? {type: "kw_le"} : kw_le)]},
     {"name": "range_terminal", "symbols": [(lexer.has("kw_gt") ? {type: "kw_gt"} : kw_gt)]},

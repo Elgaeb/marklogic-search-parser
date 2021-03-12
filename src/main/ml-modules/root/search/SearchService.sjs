@@ -112,6 +112,16 @@ class SearchService {
             params,
             defaultValue: false,
         });
+        const returnPlan = this.booleanOption({
+            propertyName: 'returnPlan',
+            params,
+            defaultValue: false,
+        });
+        const returnEstimate = this.booleanOption({
+            propertyName: 'returnEstimate',
+            params,
+            defaultValue: true,
+        });
 
         return {
             qtext,
@@ -130,6 +140,8 @@ class SearchService {
             returnOptions,
             returnMetrics,
             returnContent,
+            returnPlan,
+            returnEstimate,
         };
     }
 
@@ -150,6 +162,8 @@ class SearchService {
         returnOptions,
         returnMetrics,
         returnContent,
+        returnPlan,
+        returnEstimate,
     }) {
         const serviceStart = DateTime.fromJSDate(new Date());
 
@@ -187,18 +201,24 @@ class SearchService {
             ctsQueries.push(cts.directoryQuery([].concat(...[collection]), 'infinity'));
         }
 
+        const additionalQuery = this.options.additionalQuery != null ? cts.query(this.options.additionalQuery) : null;
+
+        if(additionalQuery != null) {
+            ctsQueries.push(additionalQuery);
+        }
+
         const finalQuery = cts.andQuery(ctsQueries);
+        const searchOptions = [].concat(
+            ...[
+                'faceted',
+                parser.makeSortOrder({ options: this.options, orderName, reverse }),
+            ]
+        );
 
         const { searchDuration, searchResults } = time({
             metricsProperty: 'searchDuration',
             resultProperty: 'searchResults',
             timedFunction: () => {
-                const searchOptions = [].concat(
-                    ...[
-                        'faceted',
-                        parser.makeSortOrder({ options: this.options, orderName, reverse }),
-                    ]
-                );
                 return fn.subsequence(cts.search(finalQuery, searchOptions), start, pageLength);
             },
         });
@@ -266,7 +286,19 @@ class SearchService {
 
         metrics.resultsDuration = resultsDuration;
 
-        results.total = cts.estimate(finalQuery);
+        if(returnPlan) {
+            const plan = cts.plan(finalQuery, searchOptions);
+            if(returnEstimate) {
+                const planResult = plan.find(part => part.result != null);
+                if(planResult != null) {
+                    results.estimate = planResult.result.estimate;
+                }
+                results.plan = plan;
+            }
+        } else if(returnEstimate) {
+            results.estimate = cts.estimate(finalQuery);
+        }
+
         results.start = start;
         results['page-length'] = pageLength;
         results.count = resultsArr.length;

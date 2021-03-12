@@ -129,6 +129,10 @@ class TypeConverter {
     }
 
     referenceScalarType({ ref }) {
+        if(typeof(ref) === 'string') {
+            return ref;
+        }
+
         const refObj = ref.toObject();
         return refObj[Object.keys(refObj)[0]].scalarType;
     }
