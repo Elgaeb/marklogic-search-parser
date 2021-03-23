@@ -47,11 +47,21 @@ class CodeValueConstraint extends Constraint {
         }
     }
 
-    toCts({ parsedQuery }) {
+    toCts({ parsedQuery, useMatch = false }) {
+        let valueOptions, scopeOptions;
+
+        if(useMatch && this.constraintConfig.match != null) {
+            valueOptions = this.constraintConfig.match.value;
+            scopeOptions = this.constraintConfig.match.scope;
+        } else {
+            valueOptions = this.constraintConfig.value;
+            scopeOptions = this.constraintConfig.scope;
+        }
+
         const ctsQuery = this.toSubQuery({
             parsedQuery,
-            valueOptions: this.constraintConfig.value,
-            scopeOptions: this.constraintConfig.scope,
+            valueOptions,
+            scopeOptions
         });
 
         if (this.constraintConfig.additionalQuery == null) {
@@ -293,7 +303,7 @@ class CodeValueConstraint extends Constraint {
             }
 
             default: {
-                let query = this.toCts({ parsedQuery, constraintConfig });
+                let query = this.toCts({ parsedQuery, useMatch: true });
                 let matches = this.matcher.generateMatches({ doc, query, parsedQuery });
                 return matches != null && matches.length > 0
                     ? { matched: true, query, parsedQuery, matches }

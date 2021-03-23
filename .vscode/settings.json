@@ -10,20 +10,5 @@
             ],
             "url": "./options.schema.json"
         }
-    ],
-    "[javascript]": {
-        "spotlessGradle.format.enable": true,
-        "spotlessGradle.diagnostics.enable": true,
-        "editor.defaultFormatter": "richardwillis.vscode-spotless-gradle"
-    },
-    "[groovy]": {
-        "spotlessGradle.format.enable": true,
-        "spotlessGradle.diagnostics.enable": true,
-        "editor.defaultFormatter": "richardwillis.vscode-spotless-gradle"
-    },
-    "[json]": {
-        "spotlessGradle.format.enable": true,
-        "spotlessGradle.diagnostics.enable": true,
-        "editor.defaultFormatter": "richardwillis.vscode-spotless-gradle"
-    }
+    ]
 }
